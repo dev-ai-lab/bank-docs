@@ -93,9 +93,47 @@
   * [Popular service meshes:](#popular-service-meshes)
 * [Microservice code architecture](#microservice-code-architecture)
   * [Port Adapter and Onion Architecture](#port-adapter-and-onion-architecture)
+* [JAVA - Security](#java---security)
+  * [Security Libraries:](#security-libraries)
+  * [Code Injection Prevention:](#code-injection-prevention)
+    * [SQL injection](#sql-injection)
+    * [Encoding Reserved Control Sequences](#encoding-reserved-control-sequences)
+    * [XML Parser Defense](#xml-parser-defense)
+    * [JAAS](#jaas)
+  * [Cryptography](#cryptography)
+  * [Secure Communication](#secure-communication)
+  * [Public key Infrastructure (PKI)](#public-key-infrastructure-pki)
+  * [Web Security](#web-security)
 * [Spring Framework](#spring-framework)
-  * [Spring Data (JPA)](#spring-data-jpa-)
   * [Spring Testing Ecosystem](#spring-testing-ecosystem)
+  * [Spring Data (JPA)](#spring-data-jpa-)
+* [SQL Codebook](#sql-codebook)
+  * [Local setup for MacOS](#local-setup-for-macos)
+  * [Cheat sheet](#cheat-sheet)
+  * [GROUP BY and Aggregate functions](#group-by-and-aggregate-functions)
+  * [JOINS](#joins)
+    * [INNER JOIN will result with the set of records that match in both tables - Intersection of both](#inner-join-will-result-with-the-set-of-records-that-match-in-both-tables---intersection-of-both)
+    * [Outer Joins](#outer-joins)
+    * [UNION](#union)
+  * [Advanced SQL commands](#advanced-sql-commands)
+    * [Mathematical Functions and Operators](#mathematical-functions-and-operators)
+    * [String functions and operators](#string-functions-and-operators)
+    * [Subquery](#subquery)
+    * [Self-Join](#self-join)
+    * [PgAdmin](#pgadmin)
+  * [Additional Examples](#additional-examples)
+  * [Creating databases and tables](#creating-databases-and-tables)
+    * [Data types:](#data-types-)
+    * [Constraints:](#constraints)
+      * [CHECK](#check)
+      * [ALTER](#alter)
+      * [DROP column](#drop-column)
+  * [Conditional expression and procedures](#conditional-expression-and-procedures)
+  * [VIEWS](#views)
+  * [Import and Export in pgAdmin](#import-and-export-in-pgadmin)
+  * [EXTRA: Postgres with Python](#extra-postgres-with-python)
+* [BPMN with Camunda](#bpmn-with-camunda)
+* [ChatGBT as developer assistance](#chatgbt-as-developer-assistance-)
   * [](#)
 <!-- TOC -->
 # Identify domain context and service boundaries
@@ -114,7 +152,7 @@
 1. Build images using Dockerfile
 
 ``
-docker build . -t dockerxya/bank-accounts
+docker build . -t dockerxya/bank-account
 ``
 
 ``
@@ -153,7 +191,7 @@ It offers consistency, security, performance and governance with the need for Do
 ## Running docker
 
 ``
-docker run -p 8081:8080 dockerxya/bank-accounts
+docker run -p 8081:8080 dockerxya/bank-account
 ``
 
 ![docker-port-mapping.png](media/docker-port-mapping.png)
@@ -224,7 +262,7 @@ test precedence by setting all the three in intellij
 ![Spring cloud config server](media/spring-cloud-config-server.png)
 
 ### Check properties
-prod + default: http://localhost:8071/bank-accounts/prod
+prod + default: http://localhost:8071/bank-account/prod
 
 ### Profiles
 - git
@@ -289,7 +327,7 @@ Summary: Changes pushed to github --> hookdeck endpoint is triggered --> using s
 # Database
 In microservices architecture, each service should have its own database.
 ```
-docker run -p 3306:3306 --name bank-accounts-db -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=bank-accounts-db -d mysql
+docker run -p 3306:3306 --name bank-account-db -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=bank-account-db -d mysql
 ```
 In order to connect with db, use [SQLECTRON](https://sqlectron.github.io/) and `localhost:3306`.
 Create database for microservice and expose in different port in local machine.
@@ -360,7 +398,7 @@ Refer to spring cloud gateway docs for different predicates, filters, global fil
 - Java lambda configuration vs yaml configuration: java based configuration gives more flexibility to customize (Fluent Java Routes API)
 - Path route using [yaml](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#the-path-route-predicate-factory)
 - For tracing purpose we added a custom header `bank-correlation-id` using `RequestTraceFilter`. 
-- This correlation-id is added to all microservices down the call as coded in `bank-accounts` call chain.
+- This correlation-id is added to all microservices down the call as coded in `bank-account` call chain.
 
 Final Demo: config server starts and other util services start, then eureka which depends on config server starts as well as other services.
 Finally GW service starts.
@@ -373,9 +411,9 @@ Finally GW service starts.
 - [Resilience4J](https://resilience4j.readme.io/docs)
   - We implement circuit breaker in spring gateway server using this.
   - It has different patterns implemented in core modules
-- Problematic scenario: in calling gerCustomerDetails bank-accounts microservice (internally calls cards and loans microservices),
+- Problematic scenario: in calling gerCustomerDetails bank-account microservice (internally calls cards and loans microservices),
 if cards service has problem and not responding, a thread is blocked. Further requests will block additional threads, leading to resource exhaustion
-in accounts and gateway servers.
+in account and gateway servers.
 - Circuit breaker [pattern](https://martinfowler.com/bliki/CircuitBreaker.html): 
   - Fails fast by opening wire to cards service
   - Fails gracefully
@@ -384,18 +422,18 @@ in accounts and gateway servers.
 
 Example: in gateway server, try to check circuit break activities using 
   - http://localhost:8072/actuator/circuitbreakers and 
-  - http://localhost:8072/actuator/circuitbreakerevents?name=accounts-circuit-breaker
-- Test it using a breaker endpoint in GET contact-info endpoint of accounts microservice
+  - http://localhost:8072/actuator/circuitbreakerevents?name=account-circuit-breaker
+- Test it using a breaker endpoint in GET contact-info endpoint of account microservice
 
 ### Fallback for circuit breaker
 Refer to FallbackController inside GW codebase and fallback URI in RouteLocator
 
 ## Circuit breaker using Feign Client in Account microservices
-- If cards service is not responding, it impacts accounts service causing thread exhaustion.
+- If cards service is not responding, it impacts account service causing thread exhaustion.
 - Fallback implements the feign client interface as in `CardsFallback`
 - Check using these urls
   - http://localhost:8080/actuator/circuitbreakers and
-  - http://localhost:8080/actuator/circuitbreakerevents?name=accounts-circuit-breaker
+  - http://localhost:8080/actuator/circuitbreakerevents?name=account-circuit-breaker
 ## Http timeout config: 
 - At gateway server we can configure a global timeout for connect and response.
 ```
@@ -753,7 +791,7 @@ docker run -d -p 7080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=ad
 - We use `hasRole` instead of `authenticated` in `ServerHttpSecurity` configuration
 - We create the Role in Auth server (i.e KeyCloak)
 - Go to Realm Roles --> Create role --> create ACCOUNTS, CARDS and LOANS roles
-- Go to the client --> Service accounts roles tab --> Assign roles. In access-token:
+- Go to the client --> Service account roles tab --> Assign roles. In access-token:
 
 ```
   "realm_access": {
@@ -849,7 +887,7 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
 ```
 - Internally it adds spring cloud function dependencies
 - We add binding and rabbitmq configuration to `application.yml` of bank-messaging-service
-- Add configuration to bank-accounts service to send messages into rabbitmq
+- Add configuration to bank-account service to send messages into rabbitmq
 
 ### Spring cloud function for messaging microservice
 - Standard interfaces from java 8: Suppliers, Functions, Consumers
@@ -888,7 +926,7 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
 - Setup Kafka with KRaft
 - Follow the steps to setup local kafka cluster
 #### Configure microservices to connect
-- Added Kafka binders as shown in pom.xml of accounts and message service
+- Added Kafka binders as shown in pom.xml of account and message service
 - Add kafka binder in application.yml
 - *NOTE:* To see two binders (kafka and rabbitmq) at play, we use two binders for two communication channels
 
@@ -942,7 +980,7 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
 - Cluster-IP (natural) vs External-IP (for exposure to outside)
 - `kubectl get events --sort-by=.metadata.creationTimestamp`
 ### Scaling up and down
-- `kubectl scale deployment bank-accounts-deployment --replicas=1`
+- `kubectl scale deployment bank-account-deployment --replicas=1`
 - `kubectl set image deployment gateway-server-deployment gateway-server=eroidxya/gateway-server:v14 --record=true`
 - `kubectl rollout history deployment gateway-server-deployment`
 - `kubectl rollout undo deployment gateway-server-deployment --to-revision=1`
@@ -1151,7 +1189,117 @@ spec:
 # Microservice code architecture
 ## Port Adapter and Onion Architecture
 
+
+# JAVA - Security
+Refer to OWASP project for further details.
+Inherent Security Features: 
+- Strong Data Type, 
+- Byte Code Verification: Bytecode --> platform independence
+- Secure Class Loading: Bytecode is loaded from *.class into VM by classloader
+- Exception Handling, 
+- Automatic Memory Management using JRE garbage collector. Memory used by objects is released and reclaimed by gc.
+- POLP: Principle of The Least Privilege
+
+## Security Libraries:
+- Authentication and Access Control
+  - JAAS (Java Auth and AuthZ service)
+- Protecting Data At Rest:
+  - Cryptographic controls to protect confidentiality, availability, and integrity of application data
+  - Using
+    - Digital signature
+    - message digests
+    - support symmetric and asymmetric and streaming ciphers
+- Secure communication Libraries
+  - Java Secure Socket Extension (JSSE)
+  - Java GSS-API
+  - Java SASL API
+- Trust management
+  - Public Key Infrastructure (PKI) is beneficial when establishing trust relationship
+  - Java CertPath API
+  - Revocation Services (OCSP/CRL), and PKIX APIs
+- Diagnostic, Forensic and Supply Chain Security
+  - Java Logging API
+  - Java Dependency Analysis Tools (jdeps) that identifies third party components 
+
+## Code Injection Prevention:
+### SQL injection
+We can defend against sql injection using JDBC prepared statement
+```
+"SELECT * FROM accounts WHERE account_number = '" + accountNumber + "';"
+
+GIVEN:
+accountNumber="TomJerry'; DROP TABLE accounts; --"
+```
+(--) is considered comment and will be ignored.
+Safer Code would be:
+```
+String query = "SELECT * FROM accounts WHERE account_number = ?;";
+PreparedStatement pstmt = dbConnection.preparedStatement(query);
+pstmt.setString(1, accountNumber);
+ResultSet results = pstmt.executeQuery();
+```
+PreparedStatement pre-computes the sql query into a binary database proprietary format. Everything passed, will be considered 
+accountNumber.
+
+### Encoding Reserved Control Sequences
+If in comment section of a website one inserts below, it will be rendered.
+```
+<script>alert("hello Alerting")</script>
+```
+< and > should be converted to &lt and &gt
+
+### XML Parser Defense
+- XML external entity (XXE) attack is used to:
+  - exfiltrate sensitive data, like below for linux password
+```
+....
+<!ENTITY xxe SYSTEM "file:///etc/passwd">]><bar>&xxe;</bar>
+```
+  - execute server-side port scanning, 
+  - denial of service
+  - Refer to OWASP for settings for popular xml parsers
+
+### JAAS
+- Subject: a user or a software service
+- Principal: Unique representation of a subject's identity within a context of an application
+- Credential: implements Refreshable and Destroyable interfaces
+- Authentication features validate 
+  - LoginContext: features to authenicate subjects
+  - LoginModule: 
+  - Callback handler
+  - Callback
+- Authorization:
+  - Policy: access control policy
+    - Security policy
+    - Security manager
+    - 
+  - AuthPermission: Permission associated with Authentication
+  - PrivateCredentialPermission:
+- App instantiates LoginContext --> LoginModules --> LoginContext login method --> LoginModules associate principals and credentials
+--> LoginContext returns authentication status to the application --> if success, app retrieves teh subject from context
+- For AuthZ: App retrieves authenticated subject from LoginContext --> execute privileged action --> if success priviledgeExceptionAction.run()
+
+## Cryptography
+  - Confidentiality. Java provides:
+    - Message Digest
+    - Managing password ciphers: encrypt and decrypt using key and initVector
+    - Digital signatures: To establish the authenticity of digital messages.
+      Only holder of private key can sign a document. Holder of public key can verify that data is signed by the owner
+      i.e HTTPS over TLS/SSL (X.509 signed by CA)
+    - Secure random number generation: DRBG (Deterministic Random Bit Generator): This refers to a category of algorithms designed for secure random number generation. Java's SecureRandom
+    - Integrity
+
+## Secure Communication
+- Java Secure Socket Extension (JSSE): Encryption, server authentication, message integrity et 
+
+## Public key Infrastructure (PKI)
+- Ecosystem of roles, responsibilities, policies, and procedures for issuing, managing and revoking digital certs.
+
+## Web Security
+
 # Spring Framework
+
+## Spring Testing Ecosystem
 
 ## Spring Data (JPA)  
 - Lazy loading vs eager
@@ -1159,6 +1307,617 @@ spec:
 - @Transactional mechanism
 - i.e from work
 
-## Spring Testing Ecosystem
+
+# SQL Codebook
+- Main frame: Business queries to database language
+## Local setup for MacOS
+- From [here](https://www.postgresql.org/download/macosx/) go and download [Postgres.app](https://postgresapp.com/) which doesn't need installer
+- Follow the instructions
+- Download [pgAdmin](https://www.pgadmin.org/download/pgadmin-4-macos/) for macos based on processor you have
+- Connect to local instance from pgAdmin
+- Create some sample data using `dvdrental.tar` by restoring the data into a new schema
+
+## Cheat sheet
+```
+SELECT c1,c2 FROM tbl WHERE conditions ORDERED BY c1 ASC, c2 DESC LIMIT 100; // AND, OR, NOT, case-sensitive**
+SELECT DISTINCT c1,c2 FROM tbl; // only distinc combination of c1,c2 returned. With or without brackets. Unique value inside the column or combination
+SELECT COUNT (DISTINCT release_year) FROM book;
+SELECT c1, aggregate(expr) FROM tbl GROUP BY c1;
+SELECT c1, aggregate(expr) AS c2 FROM table GRUOP BY c1 HAVING c2>v;
+
+INSERT INTO tbl (c1,c2,...) VALUES (v1,v2,...);
+INSERT INTO tbl (c1,c2,...) SELECT c1,c2 FROM tbl2 WHERE condition;
+UPDATE t SET c1=v1,c2=v2 WHERE condition;
+DELETE FROM t WHERE condition
+TRUNCATE TABLE t; // Drop table t and recreate it, losing all data
+
+CREATE TABLE t (
+  c1 datatype(length) column_constraints, -- or c1 datatype(length) PRIMARY KEY
+  c2 datatype(length column_constraints, -- age SMALLINT NOT NULL
+  ...
+  PRIMARY KEY (c1), -- i.e serial type, bigserial
+  table_constraints
+  );
+  
+DROP TABLE t; // remove table, including 
+ALTER TABLE t ADD COLUMN c1 datatype(length);
+
+SELECT * FROM t1 INNER JOIN t2 ON joint-conditions;
+SELECT * FROM t1 LEFT JOIN t2 ON join-conditions;
+SELECT * FROM t1 RIGHT JOIN t2 ON join-conditions;
+```
+- Example of nested query:
+```
+SELECT *
+FROM (
+    SELECT
+        d.name,
+        d.id,
+        COUNT(e.id) AS employees,
+        SUM(
+            CASE
+                WHEN e.level = 'SENIOR' THEN 1
+                WHEN e.level = 'ASSOCIATE' THEN 1
+                ELSE 0
+            END
+        ) AS AboveJunior
+    FROM
+        department d
+    LEFT JOIN
+        employee e ON d.id = e.fk_department
+    GROUP BY
+        d.id
+) AS subquery
+LIMIT 10;
+
+```
+- Ascending the throne, descending the throne
+
+- COUNT(*) vs COUNT(title) vs COUNT(id)
+- Meaning of `ORDER BY c1,c2`? If two row have same value in c1?
+  - First order by c1, and then c2 if the condition of equality happens in c1 
+- Default value of `ORDER BY`?
+```
+SELECT store_id, first_name, last_name FROM customer
+ORDER BY store_id DESC, first_name ASC
+```
+```
+-- Reward 10 paying customers
+SELECT customer_id from payment
+ORDER BY payment_date ASC
+LIMIT 10;
+
+-- How many options do I have for movie less than or equal to 50 mins length
+SELECT COUNT(*) FROM film 
+WHERE length <= 50;
+```
+
+- BETWEEN xx AND yy => >= AND <= (Inclusive)
+- For date, it should be in ISO 8601 format (yyyy-mm-dd)
+```
+-- All movie between 1,5 hours and two hours
+SELECT title FROM film 
+WHERE length BETWEEN 90 AND 120;
+
+-- Or count them
+SELECT COUNT(title) FROM film 
+WHERE length BETWEEN 90 AND 120;
+```
+- IN => for a set of values, NOT IN 
+```
+SELECT film_id, title, rating FROM film
+WHERE rating IN ('R', 'G')
+ORDER BY rating, title
+```
+
+- LIKE and ILIKE (case-insensitive): Pattern matching with String data
+  - (%) match any number of strings
+  - (_) single character wild card place to fill in. One could use more of (_) for more characters
+- LIKE '_her%': Cheryl, Theresa, Sherri
+- NOT LIKE
+- Postgres supports full regex capabilities
+```
+SELECT *
+FROM customer
+WHERE first_name LIKE 'Ja%';
+```
+
+## GROUP BY and Aggregate functions
+- Aggregate: take multiple inputs and return one output
+  - AVG(), COUNT(), MAX(), MIN(), SUM()
+- ROUND --> `ROUND(AVG(replacement_cost),2)`
+- GROUP BY syntax: `SELECT category_col, AGG(data_col) FROM t GROUP BY category_col;`
+- All columns must appear in GROUP BY claus except those on which AGG is applied
+- WHERE should not refer to AGG result. Instead we use HAVING to filter thos result
+- GROUP BY is for categorical columns (non-continuous)
+- Example
+```
+-- total number of movies for each group of ratings
+SELECT rating,
+	COUNT(rating)
+FROM film WHERE rating !='G'
+GROUP BY rating
+ORDER BY COUNT(rating); -- or its alias
+```
+```
+-- Report total payments by each customer in 2007-02-18 onwards
+SELECT staff_id, customer_id, -- here order doesn't matter
+	SUM(amount)
+FROM payment
+WHERE payment_date > '2007-02-18' -- [00:01 onwards included]
+GROUP BY staff_id, customer_id -- order here matters
+ORDER BY SUM(amount);
+```
+
+```
+-- Unique dates without timestamp
+SELECT DATE(payment_date)
+FROM payment
+GROUP BY DATE(payment_date)
+ORDER BY DATE(payment_date);
+
+-- Sales per day
+SELECT DATE(payment_date),
+	SUM(amount)
+FROM payment
+GROUP BY DATE(payment_date)
+ORDER BY SUM(amount);
+
+-- Sales per Staff
+SELECT staff_id,
+	COUNT(amount)
+FROM payment
+GROUP BY staff_id;
+
+
+SELECT first_name, last_name, address_id
+FROM customer
+WHERE first_name LIKE 'E%' AND address_id < 500
+ORDER BY customer_id DESC
+LIMIT 1;
+
+-- Average replacement cost per movie rating category in ascending average
+SELECT rating,
+	ROUND(AVG(replacement_cost), 2)
+FROM film
+GROUP BY rating
+ORDER BY AVG(replacement_cost)
+
+-- Reward top 5 customers with most total spend
+SELECT customer_id,
+	SUM(amount)
+FROM payment
+GROUP BY customer_id
+ORDER BY SUM(amount) DESC
+LIMIT 5
+```
+- HAVING: Like WHERE but for aggregated columns
+```
+SELECT customer_id, staff_id, SUM(amount)
+FROM payment
+WHERE staff_id = 2
+GROUP BY customer_id, staff_id
+HAVING SUM(amount) > 100 -- No alias allowed here
+ORDER BY SUM(amount);
+```
+
+## JOINS
+- Alias AS operator gets executed at the very end of a query, so it can't be used inside WHERE or GROUP BY
+- Only used inside select
+- INNER JOINS, OUTER JOINS, FULL JOINS, UNIONS
+- Why different joins: deal with data only present in one of the joined tables
+### INNER JOIN will result with the set of records that match in both tables - Intersection of both
+- It is symmetrical and can be swapped without change in the result
+- Just JOIN in postgres is treated as INNER JOIN
+```
+SELECT payment_id, amount, email, payment.customer_id
+FROM payment 
+INNER JOIN customer ON payment.customer_id = customer.customer_id
+ORDER BY payment.customer_id
+```
+
+### Outer Joins
+- FULL OUTER JOIN, LEFT OUTER JOIN, RIGHT OUTER JOIN 
+- FULL OUTER JOIN: Union of both, including everything, fill with null for mismatches
+  - Additional filter using WHERE to gain non-intersection
+```
+-- Compliance confirmation: no payment without customer info and no customer without payment
+SELECT * FROM customer
+FULL OUTER JOIN payment
+ON customer.customer_id = payment.customer_id
+WHERE customer.customer_id IS NULL
+OR payment.payment_id IS NULL;
+```
+- LEFT OUTER JOIN or LEFT JOIN: All from left table and from right table, and if no match with right table, then null.
+- Using where one could further modify the result like exclusively values to the left table t1.id IS NULL
+```
+SELECT * FROM T1 LEFT OUTER JOIN T2 ON T1.col_match = T2.col_match
+```
+Result?
+```
+SELECT * FROM T1 LEFT OUTER JOIN T2 ON T1.col_match = T2.col_match WHERE T2.id IS NULL
+```
+- RIGHT OUTER JOIN or RIGHT JOIN: Flipped state of LEFT JOIN. All from right table
+  - With t1.id IS null, one can retrieve data exclusively found in B.
+  - Order of table and order of matching col matters
+```
+SELECT * FROM T1 RIGHT OUTER JOIN T2 ON T1.col_match = T2.col_match
+```
+Result?
+```
+SELECT * FROM T1 RIGHT OUTER JOIN T2 ON T1.col_match = T2.col_match WHERE T1.id IS NULL
+```
+
+### UNION
+- Combine results of two or more select statements. They should match logically. Like Q1 and Q2 of sales table
+```
+SELECT * FROM T1
+UNION
+SELECT * FROM T2
+```
+
+- Examples:
+```
+-- Notify all customers from California
+SELECT first_name, last_name, email
+FROM customer
+INNER JOIN address ON customer.address_id = address.address_id
+WHERE district = 'California';
+```
+
+```
+-- Using two joins
+-- 1.
+SELECT first_name, last_name, title
+FROM film
+INNER JOIN (
+	SELECT first_name, last_name, film_id
+FROM film_actor
+INNER JOIN actor ON film_actor.actor_id = actor.actor_id
+) AS x
+ON film.film_id = x.film_id
+WHERE first_name = 'Nick' AND last_name = 'Wahlberg';
+
+-- 2.
+SELECT first_name, last_name, title
+FROM actor
+INNER JOIN film_actor ON actor.actor_id = film_actor.actor_id
+INNER JOIN film ON film_actor.film_id = film.film_id
+WHERE first_name = 'Nick' AND last_name = 'Wahlberg';
+```
+- Thinking process: join step by step everything and then filter using WHERE.
+
+## Advanced SQL commands
+- TIME, DATE, TIMESTAMP, TIMESTAMPZ (zone info as well)
+- [Functions](https://www.postgresql.org/docs/8.1/functions-datetime.html): TIMEZONE, NOW, TIMEOFDAY, CURRENT_TIME, CURRENT_DATE
+```
+SHOW ALL
+SHOW TIMEZONE
+SELECT NOW()
+SELECT TIMEOFDAY() -- timestamp as string
+SELECT CURRENT_DATE
+EXTRACT (YEAR FROM date_col) -- i.e in select query
+AGE(TIMESTAMP) -- i.e in select query
+TO_CHAR(date_col, 'mm-dd-yyyy') -- more option, see docs i.e 'MONTH YYYY', month name will be in uppercase or 'MONTH
+```
+- Examples:
+```
+SELECT COUNT(*)
+FROM payment
+WHERE EXTRACT(DOW FROM payment_date) = 1; -- 0-6, 0 for Sunday
+```
+### Mathematical Functions and Operators
+- Add, subtract, logarithm, rounding of columns. [More](https://www.postgresql.org/docs/current/functions-math.html)
+```
+SELECT title, ROUND(100 * rental_rate / replacement_cost, 2) AS Rental_Rate_Percentage 
+FROM film
+```
+```
+-- 1/50 of monthlymaintenance
+SELECT * FROM cd.facilities AS f
+WHERE f.membercost > 0 AND (f.membercost < (f.monthlymaintenance * 1/50.0));
+-- Remember to put 50.0 to make division floating. (f.membercost < (1/50 * f.monthlymaintenance)) will always return 0 as it is division of integers
+```
+### String functions and operators
+- [More](https://www.postgresql.org/docs/9.1/functions-string.html).
+- concatenate, Lowercase uppercase, regex, convert to bytes, length()
+- Concatenate
+- ```
+  SELECT first_name || ' ' || last_name 
+  FROM customer
+  ```
+
+### Subquery
+- Innermost query is run first. Used with 
+```
+SELECT student,grade
+FROM test_scores
+WHERE grade > (SELECT AVG(grade) FROM test_scores)
+
+SELECT student,grade
+FROM test_scores
+WHERE student IN
+(SELECT student
+FROM honor_roll
+)
+```
+- Example queries
+```
+SELECT title, rental_rate
+FROM film
+WHERE rental_rate > (SELECT AVG(rental_rate) FROM film);
+```
+
+```
+-- Film titles return between dates
+SELECT film_id, title FROM film
+WHERE film_id IN (
+SELECT film_id FROM inventory
+INNER JOIN rental ON inventory.inventory_id = rental.inventory_id
+WHERE return_date BETWEEN '2005-05-29' AND '2005-05-30'
+)
+ORDER BY title;
+)
+```
+- WHERE EXISTS, WHERE NOT EXISTS with a subquery returning a list
+
+### Self-Join
+- Join of two copies of the same table
+```
+-- All film pairs having equal duration excluding the film with itself
+SELECT f1.title, f2.title, f1.length, f2.length
+FROM film AS f1
+JOIN film AS f2 ON f1.length = f2.length AND f1.film_id != f2.film_id;
+```
+### PgAdmin
+- Create database
+- Right click and restore
+- Restore with Pre-date, data, post-data and Tablespace as pg_default
+
+## Additional Examples
+```
+SELECT m.memid, m.surname, m.firstname, m.joindate 
+FROM cd.members AS m
+WHERE m.joindate > '2012-09-01' -- where joindate is a timestamp without zone i.e 2012-09-01 08:44:42 (included)
+
+
+-- Number of slots booked per facility in September 2012
+SELECT FACID,
+	SUM(SLOTS) AS SLOTS_COUNT
+FROM CD.BOOKINGS
+-- Alternatively starttime >= '2012-09-01' AND starttime < '2012-10-01' 
+WHERE TO_CHAR(STARTTIME,'Month yyyy') = 'September 2012'
+GROUP BY FACID
+ORDER BY SUM(SLOTS)
+
+
+-- for the date '2012-09-21'? Return a list of start time and facility name pairings, ordered by the time
+SELECT f.name, b.starttime AS start
+FROM cd.bookings b
+INNER JOIN cd.facilities f ON b.facid = f.facid
+-- alternatively: AND cd.bookings.starttime >= '2012-09-21' AND cd.bookings.starttime < '2012-09-22' 
+WHERE TO_CHAR(b.starttime, 'yyyy-mm-dd') = '2012-09-21' AND f.name ILIKE '%Tennis Court%'
+ORDER BY b.starttime;
+
+
+-- list of the start times for bookings by members named 'David Farrell'
+SELECT  (m.firstname || ' ' || m.surname) AS name, b.starttime AS start
+FROM cd.bookings b
+INNER JOIN cd.members m ON b.memid = m.memid
+WHERE m.firstname = 'David' AND m.surname = 'Farrell'
+```
+
+## Creating databases and tables
+### Data [types](https://www.postgresql.org/docs/current/datatype.html): 
+- boolean, char, numeric, temporal (date, time, timestamp, zone, interval)
+- Choose the right data type by thinkin about possible range of values and size i.e smallint vs integer. Year is better set to smallint
+- UUID
+- Array
+- Json
+- Hstore key-value pair
+- Geometric data
+
+### Constraints:
+- Primary Key and Foreign Key: Primary key can be combination of one or more columns
+- NOT NULL
+- UNIQUE
+- CHECK: That values satisfy a given condition
+- Table constraints:
+```
+CREATE TABLE account (
+	user_id SERIAL PRIMARY KEY,
+	username VARCHAR(50) NOT NULL,
+	password VARCHAR(50) NOT NULL,
+	email VARCHAR(250) UNIQUE NOT NULL,
+	created_on TIMESTAMP NOT NULL,
+	last_login TIMESTAMP
+) 
+
+CREATE TABLE job (
+	job_id SERIAL PRIMARY KEY,
+	job_name VARCHAR(200) UNIQUE NOT NULL
+)
+
+CREATE TABLE account_job (
+	user_id INTEGER REFERENCES account(user_id),
+	job_id INTEGER REFERENCES job(job_id),
+	hire_date TIMESTAMP 
+)
+
+INSERT INTO account (username, password, email, created_on)
+VALUES ('rashed', '123', 'rashed@car.com', CURRENT_TIMESTAMP)
+
+UPDATE job 
+SET job_name = 'Software Developer'
+WHERE job_name = 'Software Engineer';
+-- If we want to return the column after update
+UPDATE t
+SET last_login = created_on
+RETURNING account_id, last_login 
+
+-- Update join example
+UPDATE account_job
+SET hire_date = account.created_on
+FROM account
+WHERE account_job.user_id = account.user_id
+
+DELETE from job -- DELETE FROM job will delete all
+WHERE job_name = 'Software Developer'
+RETURNING job_id, job_name
+```
+
+#### CHECK
+- i.e age SMALLINT CHECK (age > 21), parent_age SMALLINT CHECK (parent_age > age)
+
+#### [ALTER](https://www.postgresql.org/docs/current/sql-altertable.html)
+- Add, delete, rename columns
+- Change column data type
+- Set default values for columns
+- Add check constraints
+- Rename table
+```
+ALTER TABLE t ADD COLUMN c1 datatype(length);
+ALTER TABLE t DROP COLUMN c1; -- 
+ALTER TABLE t SET DEFAULT value
+ALTER TABLE t RENAME new_name
+ALTER TABLE t RENAME COLUMN current_name TO new_name
+ALTER TABLE t ALTER COLUMN col DROP NOT NULL
+
+ALTER TABLE students
+ALTER COLUMN homeroom_number TYPE INTEGER
+```
+
+#### DROP column
+- It will not remove columns used in views, triggers or stored procedures without additional CASCADE claus
+- To achieve this as well
+```
+ALTER TABLE t
+DROP COLUMN col1 CASCADE -- or DROP COLUMN IF EXISTS
+DROP COLUMN col2 CASCADE
+```
+
+## Conditional expression and procedures
+- CASE, COALESCE, NULLIF, CAST, Views, Import/Exports
+- CASE has good use in combination of enum in code
+```
+SELECT customer_id,
+CASE
+	WHEN (customer_id < 100) THEN 'PREMIUM'
+	WHEN (customer_id BETWEEN 100 AND 200) THEN 'PLUS'
+	ELSE 'NORMAL'
+END AS loyalty_class
+FROM customer
+
+SELECT customer_id,
+CASE customer_id
+	WHEN 1 THEN 'FIRST'
+	WHEN 2 THEN 'SECOND'
+	ELSE 'NORMAL'
+END AS loyalty_age
+FROM customer
+
+-- discounted (0.99) films count
+SELECT
+SUM(CASE rental_rate
+	WHEN 0.99 THEN 1
+	ELSE 0
+END) AS discounted_film_count
+SUM(CASE rental_rate
+	WHEN 2.99 THEN 1
+	ELSE 0
+END) AS premium_film_count
+FROM film
+```
+- COALESCE: takes n arguments and returns the first non-null
+- -SELECT COALESCE (NULL, 2, 3) --> 2
+```
+SELECT item, (price - COALESCE(discount,0)) AS final -- WHEN discount is null, it defaults to 0
+FROM t;
+```
+
+- CAST: only reasonable ones
+  - SELECT CAST('4' AS INTEGER)
+  - SELECT '5'::INTEGER - only in postgres
+
+- NULLIF
+  - NULLIF(10,10): returns null if both equal, otherwise return the first one
+  - Use case: divide by 0 i.e NULLIF(expression-returning-zero, 0). Returing a null will be result in null instead of error
+
+## VIEWS
+- See queries result as if the table exists
+- Stored query
+- Virtual table
+```
+CREATE VIEW customer_mailing_address AS
+SELECT first_name, last_name, address FROM customer
+INNER JOIN address ON customer.address_id = address.address_id
+
+SELECT * FROM customer_mailing_address
+```
+- Update view or update query
+```
+CREATE OR REPLACE VIEW customer_mailing_address AS
+SELECT first_name, last_name, address, district FROM customer
+INNER JOIN address ON customer.address_id = address.address_id
+
+DROP VIEW IF EXISTS customer_mailing_address
+ALTER VIEW customer_mailing_address RENAME TO customer_address_view
+```
+
+## Import and Export in pgAdmin
+- from .csv
+- import into an existing table and not possible to create a table from csv
+- External tool might be able to create table
+- Steps
+  - Create a sheet and export or save as csv. Make sure the right format
+  - Right click --> Import Export Data ( select the delimiter between columns i.e ; or ,)
+  - Remember to have values for all column including serial fields
+
+## EXTRA: Postgres with Python
+- `python3 --version` in macos
+- `pip3`
+- Install [JupyterLab](https://jupyter.org/install) using pip3 and start it `jupyter lab`
+- Install pyscopg `pip3 install pyscopg`
+- When we have Postgres.App instead of an installed Postgres, we need to make sure JupyterLab is able to find libpq
+- DYLD_LIBRARY_PATH is an environment variable used on macOS to specify additional directories to search for dynamic libraries. 
+In the context of Postgres.App, which is a self-contained application bundle that includes the PostgreSQL database server and related tools, 
+setting DYLD_LIBRARY_PATH allows the operating system to locate the PostgreSQL dynamic library (libpq) bundled with Postgres.App.
+```
+export DYLD_LIBRARY_PATH=/Applications/Postgres.app/Contents/Versions/<version>/lib:$DYLD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH=/Applications/Postgres.app/Contents/Versions/16/lib:$DYLD_LIBRARY_PATH
+```
+- Restart jupyterlab and Proceed with Notebook coding:
+```
+[1] import psycopg as pg;
+
+[2] try:
+    connection = pg.connect(
+        user="postgres",
+        password="",
+        host="localhost",
+        port="5432",
+        dbname="dvdrental"
+    )
+    print("Connected to the database.")
+except (Exception, pg.Error) as error:
+    print("Error while connecting to PostgreSQL:", error)
+    
+[3] cur = connection.cursor()
+[4] cur.execute("SELECT * FROM payment")
+[5] data = cur.fetchmany(5)
+[6] data[0][4]
+[7dCo] connection.close()
+```
+
+# BPMN with Camunda
+- Integrated in bank-accounts
+- Links to env variables and history data variables
+- To trigger process start at runtime, one would need `/META-INF/processes.xml` in classpath
+- All bpmns found in the classpath will be deployed if auto deployment is true
+
+# ChatGBT as developer assistance 
+- Very handy in terms of usual code quality checkup, test, knowledge refresh etc
+- Prompt Engineering is the emerging term
+- Just type: `Nullif use case with example using postgres` and see the wonder
 
 ## 
