@@ -1,7 +1,10 @@
 # Developing microservices using Spring Boot Ecosystem
 <!-- TOC -->
 * [Developing microservices using Spring Boot Ecosystem](#developing-microservices-using-spring-boot-ecosystem)
-* [Identify domain context and service boundaries](#identify-domain-context-and-service-boundaries)
+* [Design Pattern](#design-pattern)
+* [Java and Imperative vs Declarative Programming](#java-and-imperative-vs-declarative-programming)
+* [Domain Driven Design (DDD)](#domain-driven-design-ddd)
+  * [Identify domain context and service boundaries](#identify-domain-context-and-service-boundaries)
 * [Deployment, Portability, and Scalability](#deployment-portability-and-scalability)
 * [Docker](#docker-)
   * [Build Image](#build-image)
@@ -133,10 +136,19 @@
   * [Import and Export in pgAdmin](#import-and-export-in-pgadmin)
   * [EXTRA: Postgres with Python](#extra-postgres-with-python)
 * [BPMN with Camunda](#bpmn-with-camunda)
-* [ChatGBT as developer assistance](#chatgbt-as-developer-assistance-)
+* [ChatGPT as developer assistance](#chatgpt-as-developer-assistance-)
   * [](#)
 <!-- TOC -->
-# Identify domain context and service boundaries
+
+# Design Pattern
+- All design patterns in a single picture
+
+![SOLID.svg](media/SOLID.svg)
+
+# Java and Imperative vs Declarative Programming
+
+# Domain Driven Design (DDD)
+## Identify domain context and service boundaries
 - Domain-driven sizing - requires a lot of time
 - Event-storming sizing - faster
   - --> https://www.lucidchart.com/blog/ddd-event-storming
@@ -154,7 +166,6 @@
 ``
 docker build . -t dockerxya/bank-account
 ``
-
 ``
 docker inspect image <image-id>
 ``
@@ -1915,7 +1926,7 @@ except (Exception, pg.Error) as error:
 - To trigger process start at runtime, one would need `/META-INF/processes.xml` in classpath
 - All bpmns found in the classpath will be deployed if auto deployment is true
 
-# ChatGBT as developer assistance 
+# ChatGPT as developer assistance 
 - Very handy in terms of usual code quality checkup, test, knowledge refresh etc
 - Prompt Engineering is the emerging term
 - Just type: `Nullif use case with example using postgres` and see the wonder
