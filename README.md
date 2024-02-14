@@ -145,8 +145,180 @@
 
 ![SOLID.svg](media/SOLID.svg)
 
+# Java
+- Java is platform independent (but needs JVM preinstalled)
+- JVM vs Docker: Isolation, Abstraction HW, and OS, portability, resource management, security
+- Abstract class vs Interface:
+  - Instance variables are not allowed in interface
+  - `implements`multiple level, `extends`one level
+-
 # Java and Imperative vs Declarative Programming
+## Imperative
+- Focuses on describing how to achieve a specific result step by step
+- Relies on statements like for, while, if, else
+- Key Features: Mutable state, explicit control flow, and often more verbose.
+```
+int sumOfSquaresOfEvens = 0; 
+for (int number : numbers) {
+    if (number % 2 == 0) {
+        sumOfSquaresOfEvens += number * number;
+    }
+}
+```
+## Declarative:
+- Focuses on describing what needs to be achieved without specifying how to achieve it
+- Use higher-level constructs like streams, lambdas, and functional operations
+- Key Features: Emphasis on immutability, higher-order functions, and concise expressions 
+- Java still remains primarily an imperative object-oriented language
+```
+int sumOfSquaresOfEvens = numbers.stream()
+                                         .filter(number -> number % 2 == 0)
+                                         .mapToInt(number -> number * number)
+                                         .sum();
+```
+## Modern Java Features
+### Functional Interface
+- Functional Interface: Interface that has only one abstract method
+- Types:
+  - Consumer - BiConsumer: consumes one value : consumes two values
+  ```
+  List<String> names = new ArrayList<>();
+  names.add("Alice");
+  names.add("Bob");
+  names.add("Charlie");
 
+  // Using a Consumer to print each name in the list
+  Consumer<String> printName = name -> System.out.println("Hello, " + name);
+  names.forEach(printName);
+  
+  Map<String, Integer> ages = new HashMap<>();
+  ages.put("Alice", 30);
+  ages.put("Bob", 25);
+  ages.put("Charlie", 35);
+
+  Using a BiConsumer to print each name and age in the map
+  BiConsumer<String, Integer> printNameAndAge = (name, age) -> System.out.println(name + " is " + age + " years old");
+  ages.forEach(printNameAndAge);
+  ```
+  - Predicate - BiPredicate: `test()`, `and()`, `or()` for chaining
+  ```
+  BiPredicate<Integer, Integer> isSumGreaterThanTen = (num1, num2) -> (num1 + num2) > 10;
+  // Test pairs of numbers and print if their sum is greater than 10
+  System.out.println("Is sum of 5 and 6 greater than 10? " + isSumGreaterThanTen.test(5, 6));
+  ```
+  - Function - BiFunction
+  ```
+  Function<String, Integer> stringLength = str -> str.length();
+
+  // Apply the function to get the length of a string
+  int length = stringLength.apply("Hello");
+  
+  BiFunction<Integer, Integer, Integer> sum = (num1, num2) -> num1 + num2;
+  // Apply the function to get the sum of two integers
+  int result = sum.apply(5, 3);
+  ```
+- `accept()` performs operation and `andThen()` used for chaining different functions
+  - UnaryOperator, BinaryOperator
+  ```
+  UnaryOperator<Integer> doubleInteger = num -> num * 2;
+  // Apply the UnaryOperator to double an integer
+  int result = doubleInteger.apply(5);
+  
+  BinaryOperator<Integer> max = (num1, num2) -> Math.max(num1, num2);
+  // Apply the BinaryOperator to find the maximum of two integers
+  int result = max.apply(5, 8);
+  ```
+  - Supplier Function
+  ```
+  Supplier<Integer> randomIntegerSupplier = () -> (int) (Math.random() * 100) + 1;
+  // Get a random integer using the Supplier
+  int randomNumber = randomIntegerSupplier.get();
+  ```
+### Constructor and Method References
+- Method reference `String::toUpperCase` for consumer function
+- Constructor reference `Student::new` for empty constructor
+### Lambdas
+- Anonymous functions
+```
+Runnable r = () -> System.out.println("hi");
+r.run();
+or 
+new Thread(() -> System.out.println("hi")).start();
+
+Comparator<Integer> comp = Integer::compareTo;
+```
+- Local variable outside lambda is not modifiable.
+- Effectively final: lambda not allowed to modify local variable even if not final -->
+### Streaming API
+- Can be performed sequentially or in parallel
+- Intermediate operation and 
+- terminal operation: it is the one which starts the stream operation
+- Debugging streaming operations: `peak()`
+- `map() flatMap(), distinct(), count(), sorted(), reduce(), min(), limi(), allMatch(), anyMatch(), noneMatch()`
+- `findAny(), findFirst()`
+- Short-circuiting: limit(), findFirst(), findAny(), anyMatch(), allMatch(), noneMatch()
+- Factory methods: `Stream.of(1,2,3), Stream.iterate(1, x->x*2), Stream.generate(Supplier<>)`
+- Numeric Streams: `range(), rangeClose(), count(), foreach(),`
+  - Aggregate functions: `sum(), max(), min(), average(), mapToInt()`
+- Boxing and Unboxing
+- Terminal operations: 
+  - `collect()`: Inputs to collect() --> from Collectors --> 
+    - `joining(...), counting(...), mapping(...), minBy(...), `
+    - `minBy(...), maxBy(...), summingInt(), averagingInt()`
+    - `grouptingBy(classifier), groupingBy(classifier, downstream), groupingBy(classifier,supplier, downstream`
+    - `groupingBy() - maxBy(), groupingBy() - minBy(), collectingAndThen()`
+    - `partitionBy(predicate), partitioningBy(predicate,downstream`
+- Parallel Streams: `IntStream.rangeClose(1,1000).sum();` vs `IntStream.rangeClosed(1,1000).parallel().sum())`
+- How parallel streams works taking into account the number of processors `(Runtime.getRuntime().availableProcessors()))`
+- When not to use parallel streams. Example: boxing unboxing scenario. Local variable scenario
+### Optionals
+- Avoid too many nulls
+- `Optional.ofNullable(...), Optional.of()`
+- `Optional.orElse(), orElseGet(), orElseThrow()`
+- `ifPresent(), isPresent()`
+- `map(), flatMap(), filter()`
+### Concurrency and Immutability
+### Default and Static methods:
+- Default method, can be overriden
+### New Date and Time API (java.time)
+- LocalDate, LocalTime, LocalDateTime in java.time
+- Immutable with functional programming
+- Supporting classes: Instant, Duration, Period
+- Handy methods: `now(), of(xxx), getYear(), localDate.getDayOfWeek()`
+- Modifying local date. `localDate.plusMonths(xx), .plusDays(xx)` localtime etc
+- Same with localtime
+- LocalDateTime: `getHour(), getMinute(), plus(), plusDays()`
+- `withYear(), with(TemporalAdjusters.firstDayOfNextMonth())`
+- Conversion support b/w LocalTime, LocalDate and LocalDateTime. `localDate.atTime(hour, minute), localTime.atDate(localDate)`
+- *Period*: Period representation. used with LocalDate.
+  - Use case: `Period p = Period.between(localDate1, localDate2)`, `p.getMonths(), p.getDays()`, `Period.ofYears(10)`
+- *Duration*: time-based representation of hours, minutes, seconds
+- Used with LocalTime and LocalDateTime 
+- `Duration.ofHours(3)`
+- `Duration d = Duration.between(localtime, localtime);`
+- *Instance*: Represents time in machine readable format
+  - `Instant.now()`: time in seconds from January 01, 1970 (EPOCH)
+  - `Duration.between(instant, instant)`
+- *Time Zones*
+  - ZonedDateTime, ZoneID, ZoneOffset
+  - zonedDateTime.getOffset() - Time difference from UTC
+  - zonedDateTime.getZone - to get zone id
+  - ZoneId.getAvailableZoneIds()
+  - Get current datetime in Seattle - `ZonedDateTime.now(ZoneId.of("America/Los_Angeles"))`
+  - Conversions: localDateTime.atZone(ZoneId.of("America/Los_Angeles")), Instant.now().atZone(xx), 
+- java.util.Date and java.sql.date to LocalDate: 
+  - `date.toInstant.atZone(ZoneId.systemDefault()).toLocalDate()`
+  - vise versa: `new Date().from(Instant)`
+  - Similarly for Sql Date
+- DateTimeFormatter: 
+  - Parse: String to LocalDate etc `LocalDate.parse("2022-03-23")`
+  ```
+  String date = "2018/04/24";
+  DateTimeFormatter d = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+  System.out.println(LocalDate.parse(date, d));
+  ```
+  - Similarly for LocalTime
+  - Format: LocalDate etc to String
 # Domain Driven Design (DDD)
 ## Identify domain context and service boundaries
 - Domain-driven sizing - requires a lot of time
