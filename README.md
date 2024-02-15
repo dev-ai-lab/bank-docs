@@ -146,10 +146,42 @@
 ![SOLID.svg](media/SOLID.svg)
 
 # Java
-- Java is platform independent (but needs JVM preinstalled)
+- Platform independent --> JVM preinstalled
+
+![java-features.png](media/java-features-1.png)
+- Secured: No pointer used. Bytecode and exception handling.
+- Robust: gc and strong memory management
+- Architectural neutral: 32 bit vs 64 bit
 - JVM vs Docker: Isolation, Abstraction HW, and OS, portability, resource management, security
+  - Jvm --> runtime engine which calls main method
+  - Jvm is a specification which computer system should implement.
+
+![img.png](media/java-bytecode-jvm.png)
+- JRE: It's the implementation of JVM.
+- JDK: Dev kit for developing applications.
+- Java vs C++: 
+  - App programming -> System programming
+  - Platform independent -> Platform dependent
+  - Pointer internally -> Pointer explicitly
+  - call by value only (primitive types) / a copy -> both: by value and by reference
+  - thread support built-in -> needs external libraries
+  - Not so interactive with hardware -> nearer to hardware
+- JVM memory allocation:
+
+![jvm-memory-mgmt.png](media/jvm-memory-mgmt.png)
+
+- JIT: Selectively compiling frequently executed portions of code, the JIT compiler improves the overall performance of Java applications
+- Classloader: Responsible for loading classes into the JVM at runtime.
+  1. Bootstrap classloader: loads core java classes i.e java.lang etc
+  2. Extension classloader: loads `xx/jre/lib/ext`
+  3. Sys/App classloader: Responsible for loading application-specific classes and resources. In spring boot apps, all components and main application class
+  4. Custom Class Loaders: subclass the `java.lang.ClassLoader` to load from non-standard locations i.e db, network
+- Default value for local variables: No value
+- Access specifiers: public, protected (same package or subclasses), default (within package - by default), private
+- 
+- 
 - Abstract class vs Interface:
-  - Instance variables are not allowed in interface
+  - No instance variable in interface
   - `implements`multiple level, `extends`one level
 -
 # Java and Imperative vs Declarative Programming
