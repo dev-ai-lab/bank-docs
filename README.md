@@ -170,6 +170,8 @@
 
 ![jvm-memory-mgmt.png](media/jvm-memory-mgmt.png)
 
+![jvm-mem-locations.png](media/jvm-mem-locations.png)
+
 - JIT: Selectively compiling frequently executed portions of code, the JIT compiler improves the overall performance of Java applications
 - Classloader: Responsible for loading classes into the JVM at runtime.
   1. Bootstrap classloader: loads core java classes i.e java.lang etc
@@ -178,8 +180,60 @@
   4. Custom Class Loaders: subclass the `java.lang.ClassLoader` to load from non-standard locations i.e db, network
 - Default value for local variables: No value
 - Access specifiers: public, protected (same package or subclasses), default (within package - by default), private
+- `static` methods and variables: When something is common to all objects. Stored in class area
+- Packages: avoids name conflicts, eases access control, locate classes easier
+- `sout(2 + 3 + "java")` vs `sout("java" + 2 + 3)` vs `sout("java" + 2 * 3)`
+## Object Oriented
+- Modularity and re-usability
+- Based on objects having data and methods
+- Bottom-up approach: i.e accounts,cards,transactions--> BankApp
+- Encapsulation (contain all required data and operations) and abstraction (hide internal complexity)
+- Java, python, c++ uses this concept
+- In contrast to object-based language like JavaScript( having inbuilt objects i.e window in JavaScript)
+- Object references as instance variables are initialized to null
+
+- Constructor: special method, no explicit return, not inherited, can't be final, default one there to assign default values
+  - When a parameterized constructor is there, no default constructor implicitly 
+- `new`: 1. Memory allocation, 2. init (init default values: null -> instance references, 0 -> numeric types, false -> boolean), 3. constructor invocation 4. Return references (or a memory address)
+- Default constructors: if not there, compiler creates one initializing the default values
+- Static method: this and super() can't be used here. Main methods is static so that jvm doesn't need to create an object to call it.
+- Static block: `static{xxx}` is used to initialize static data members. It is executed before main method at class loading time.
+- `this` is a reference variable referring to the current object. `this()` invokes current class constructor i.e `this(2)`. It is final. 
+- `super`: When an instance of subclass is created, the instance of super class created implicitly and is referenced by variable super.
+  - `super()` is called implicitly by compiler as first statement when no super or this present
+- `this()` and `super()` can't be used together in a constructor: Each has to be the first statement
+```
+class Person   
+{  
+    public Person(){  System.out.println("Person class constructor called"); }  
+}  
+public class Employee extends Person   
+{  
+    public Employee() { System.out.println("Employee class constructor called"); }  
+    public static void main (String args[]) { Employee e = new Employee(); }  
+} 
+==> Person class xxxx
+    Employee class xxx
+```
+- Inheritance: 
+  - code reusability and method overriding. IS-A vs HAS-A
+  - Runtime polymorphism - Liskov Substitution
+- Aggregation: HAS-A
+- Composition: Stronger relationship than aggregation in which one can't exist without the other. i.e Student - Class
 - 
-- 
+- Object: It is the superclass of all classes. It has `equal()`, `hash()`, `toString()`, `clone()` etc methods which classes can override
+  - How two objects are defined as equal --> override `equal()`.
+  - How to store objects uniquely in Set --> override `hash()`.
+  - For a class object to be cloneable, it has to implement `java.lang.Cloneable`
+- Method Overloading:
+  - 1. By changing number of arguments
+  - 2. By changing data type of arguments
+  - `main()` can be overloaded and we can have as many as we want
+  - type promotion: 
+  ![type promotion](media/type-promotion.png)
+    - reference
+
+
 - Abstract class vs Interface:
   - No instance variable in interface
   - `implements`multiple level, `extends`one level
