@@ -200,7 +200,11 @@
 - Modularity and re-usability
 - Based on objects having data and methods
 - Bottom-up approach: i.e accounts,cards,transactions--> BankApp
-- Encapsulation (contain all required data and operations) and abstraction (hide internal complexity)
+- Encapsulation (contain all required data and operations) and 
+- Abstraction: hide internal complexity, and showing only functionality to users
+  - achieved by
+    - abstract class
+    - interface
 - Java, python, c++ uses this concept
 - In contrast to object-based language like JavaScript( having inbuilt objects i.e window in JavaScript)
 - Object references as instance variables are initialized to null
@@ -229,8 +233,12 @@ public class Employee extends Person
     Employee class xxx
 ```
 - Inheritance: 
-  - code reusability and method overriding. IS-A vs HAS-A
+  - code re-usability and method overriding. IS-A vs HAS-A
   - Runtime polymorphism - Liskov Substitution
+```
+Base b = new Derived(); 
+b.baseMethod(); // compile: the presence of baseMethod() in Base class is checked. Runtime: b references instance of Derived class
+``` 
 - Aggregation: HAS-A
 - Composition: Stronger relationship than aggregation in which one can't exist without the other. i.e Student - Class
 - 
@@ -241,15 +249,48 @@ public class Employee extends Person
 - Method Overloading:
   - 1. By changing number of arguments
   - 2. By changing data type of arguments
-  - `main()` can be overloaded and we can have as many as we want
-  - type promotion: 
-  ![type promotion](media/type-promotion.png)
-    - reference
+  - `main()` can be overloaded, and we can have as many as we want
+  - If same type found, it is called otherwise it is promoted to the corresponding method is called.
+  - type promotion:
 
+![type promotion](media/type-promotion.png)
 
-- Abstract class vs Interface:
-  - No instance variable in interface
-  - `implements`multiple level, `extends`one level
+- Modify the throws clause of the superclass:
+  - No exception in superclass method -> subclass can declare only unchecked (not checked at compile time) exception.
+  - Exception in superclass, subclass overridden method can declare same, subclass exception.
+
+- Method overriding: We can change scope of overridden methods, but only increasing accessibility is allowed
+- Abstract class:
+  - `extends`one level
+  - abstract similar to normal class and can have
+    - abstract methods
+    - concrete methods with partial implementations
+    - final methods
+    - constructor
+    - interface implementation
+    - instance variables
+    - static variables
+  - abstract class can have anything 
+- Interface
+  - Full abstraction, multiple inheritance -> `implements`
+  - Interface can have:
+    - Constants: implicitly public, static
+    - Marker Interfaces: empty interfaces i.e Serializable, Cloneable
+    - Abstract methods - implicitly public
+    - `default` methods: default implementations but can be overridden by implementing classes
+    - `static` methods: utility methods
+    - can extend another java interface only
+    - No instance variable in interface
+  
+- *final*:
+  - Stops value change. Initialized only at declaration or in constructor
+  - Stop method overriding
+  - Stop inheritance
+  - blank final instance variable: if not static -> initialize it in the constructor. If static, initialize only in the static block.
+- Compile-time vs run-time polymorphism
+  - static binding | early binding | overloading vs late binding | late binding | overriding
+  - less flexibility vs more flexibility
+- `instanceof` operator: true or false
 -
 # Java and Imperative vs Declarative Programming
 ## Imperative
