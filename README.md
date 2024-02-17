@@ -409,6 +409,32 @@ public class Calculation
     }  
 }  
 ```
+
+## String
+- String poo: Reserved Heap Memory area for Strings
+  - Jvm check if a String is already in pool. If it exists, it returns a reference to that, if not, it creates a new string instance
+  - Saves memory by avoiding duplicacy.
+
+![string-pool.png](media/string-pool.png)
+
+- Strings are immutable:
+```
+public class StringImmutabilityExample {
+    public static void main(String[] args) {
+        String str1 = "Hello"; // Create a String object "Hello"
+        System.out.println("Original String: " + str1);
+
+        // Concatenate " World" to str1 and assign the result to a new String object
+        String str2 = str1 + " World";
+        
+        // Print the original and modified strings
+        System.out.println("Original String: " + str1);
+        System.out.println("Concatenated String: " + str2);
+    }
+}
+==> str1 remains the same. str2 is a new string
+```
+![string-literal.png](media/string-literal.png)
 # Java and Imperative vs Declarative Programming
 ## Imperative
 - Focuses on describing how to achieve a specific result step by step
