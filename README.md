@@ -194,13 +194,14 @@
 - Default value for local variables: No value
 - Access specifiers: public, protected (same package or subclasses), default (within package - by default), private
 - `static` methods and variables: When something is common to all objects. Stored in class area
-- Packages: avoids name conflicts, eases access control, locate classes easier
+- Packages: avoids name conflicts, eases access control, locate classes easier.
+  - java.lang is loaded internally and doesn't need import
 - `sout(2 + 3 + "java")` vs `sout("java" + 2 + 3)` vs `sout("java" + 2 * 3)`
 ## Object Oriented
 - Modularity and re-usability
 - Based on objects having data and methods
 - Bottom-up approach: i.e accounts,cards,transactions--> BankApp
-- Encapsulation (contain all required data and operations) and 
+- Encapsulation (contain all required data and operations): Makes code testable, readable, provide control over data, makes it read-only or write-only 
 - Abstraction: hide internal complexity, and showing only functionality to users
   - achieved by
     - abstract class
@@ -291,7 +292,123 @@ b.baseMethod(); // compile: the presence of baseMethod() in Base class is checke
   - static binding | early binding | overloading vs late binding | late binding | overriding
   - less flexibility vs more flexibility
 - `instanceof` operator: true or false
--
+
+## Exception Handling
+- Types
+  - Checked: checked at compile i.e SQlException etc
+  - Unchecked: caught at runtime i.e NullPointerException, ArithmeticException, IndexOutOfBound
+  - Error: OutOfMemoryError, AssertionError
+
+![img.png](media/exception-hierarchy.png)
+
+```
+// checked
+try {
+    FileReader reader = new FileReader(file); // May throw IOException
+} catch (IOException e) {
+    System.out.println("An error occurred while reading the file: " + e.getMessage());
+}
+
+vs
+// unchecked - it's not strictly necessary to handle this type of exception explicitly. Compiler allows you wihtout try-catch
+try {
+    result = 10 / 0; // May throw ArithmeticException
+} catch (ArithmeticException e) {
+    System.out.println("An arithmetic error occurred: " + e.getMessage());
+}
+```
+- Check: Error
+```
+.....
+catch(Exception e){System.out.println(e);}  
+catch(ArithmeticException ex){System.out.println(ex);}    
+```
+- Finally:
+  - The `finally` block is executed regardless of whether an exception occurs in the try block, and regardless of whether an exception is caught by a catch block.
+  - Used to clean up such as closing files/database
+  - Can be used without a catch block
+  - No executed only when: System.exit()
+- `throw` vs `throws`
+  - `throw new Throwable(...)` only
+- overriding method declare an exception if parent class method doesn't throw on?
+  - only unchecked exceptions
+- Exception propagation: m()//having code that throws exception --> n() calling m() --> p() which has try/catch calling n() --> main() calls p()
+  - m() at the top of stack and main() at the bottom
+- Output?
+```
+public class Main   
+{  
+    void a()  
+    {  
+        try{  
+        System.out.println("a(): Main called");  
+        b();  
+        }catch(Exception e)  
+        {  
+            System.out.println("Exception is caught");  
+        }  
+    }  
+    void b() throws Exception  
+    {  
+     try{  
+         System.out.println("b(): Main called");  
+         c();  
+     }catch(Exception e){  
+         throw new Exception();  
+     }  
+     finally   
+     {  
+         System.out.println("finally block is called");  
+     }  
+    }  
+    void c() throws Exception   
+    {  
+        throw new Exception();  
+    }  
+  
+    public static void main (String args[])  
+    {  
+        Main m = new Main();  
+        m.a();  
+    }  
+}  
+```
+- Output?
+```
+public class Calculation   
+{  
+    int a;   
+    public Calculation(int a)  
+    {  
+        this.a = a;  
+    }  
+    public int add()  
+    {  
+        a = a+10;   
+        try   
+        {  
+            a = a+10;   
+            try   
+            {  
+                a = a*10;   
+                throw new Exception();   
+            }catch(Exception e){  
+                a = a - 10;  
+            }  
+        }catch(Exception e)  
+        {  
+            a = a - 10;   
+        }  
+        return a;  
+    }  
+    public static void main (String args[])  
+    {  
+        Calculation c = new Calculation(10);  
+        int result = c.add();  
+        System.out.println("result = "+result);  
+    }  
+}  
+```
 # Java and Imperative vs Declarative Programming
 ## Imperative
 - Focuses on describing how to achieve a specific result step by step
