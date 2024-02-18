@@ -569,9 +569,7 @@ public static void main(String args[]) {
 - Serialization is a mechanism of writing the state of an object into a byte stream. 
 - It is used primarily in Hibernate, RMI, JPA, EJB and JMS technologies or to transmit it over the network
 - Serializable: by implementing the Serializable interface
-
 ![serialization-deserialization.png](media/serialization-deserialization.png)
-
 - Avoid serialization of subclass if baseclass is serializable: writeObject() or readObject() methods in the subclass and throw NotSerializableException
 - `transient`: it will not be serialized.
 - Serializable and Externalizable
