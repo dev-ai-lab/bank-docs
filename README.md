@@ -4,6 +4,12 @@
 * [Design Pattern](#design-pattern)
 * [Java](#java)
   * [Object Oriented](#object-oriented)
+  * [Exception Handling](#exception-handling)
+  * [String](#string)
+  * [Regular expression (Regex) engine (java.util.regex)](#regular-expression-regex-engine-javautilregex)
+  * [IO Stream - InputStream and OutputStream](#io-stream---inputstream-and-outputstream)
+  * [Serialization/Deserialization](#serializationdeserialization)
+  * [Java socket programming:](#java-socket-programming)
 * [Java and Imperative vs Declarative Programming](#java-and-imperative-vs-declarative-programming)
   * [Imperative](#imperative)
   * [Declarative:](#declarative)
@@ -180,10 +186,37 @@
   - thread support built-in -> needs external libraries
   - Not so interactive with hardware -> nearer to hardware
 - JVM memory allocation:
-
 ![jvm-memory-mgmt.png](media/jvm-memory-mgmt.png)
 
 ![jvm-mem-locations.png](media/jvm-mem-locations.png)
+
+- Garbage collection: reclaiming the unused runtime objects.
+  - Memory management
+  - in C it is `free()` in C++ it is `delete()
+  - gc is controlled by JVM, when a memory cleanup is needed
+  - `finalize(): Invoked just before object is garbage collected
+  - If an object is created without new, you can use the finalize method to perform cleanup processing (destroying remaining objects). The cleanup processing is the process to free up all the resources, network
+  - finalize method is present in the object class hence it is available in every class
+```
+public class TestGarbage1{  
+ public void finalize(){System.out.println("object is garbage collected");}  
+ public static void main(String args[]) {  
+  TestGarbage1 s1=new TestGarbage1();  
+  s1=null;  
+  System.gc();  
+ }  
+}  
+=> object is garbage collected
+```
+- Unreferencing an Object:
+  1. By setting reference to null
+  2. By assigning a reference to another 
+  ```
+     Employee e1=new Employee();  
+     Employee e2=new Employee();  
+     e1=e2;//now the first object referred by e1 is available for garbage collection  
+  ```
+  3. By anonymous object: `new Employee();`
 
 - JIT: Selectively compiling frequently executed portions of code, the JIT compiler improves the overall performance of Java applications
 - Classloader: Responsible for loading classes into the JVM at runtime.
@@ -197,6 +230,13 @@
 - Packages: avoids name conflicts, eases access control, locate classes easier.
   - java.lang is loaded internally and doesn't need import
 - `sout(2 + 3 + "java")` vs `sout("java" + 2 + 3)` vs `sout("java" + 2 * 3)`
+- `Runtime Class`: 
+  - Java Runtime class is used to interact with a java runtime environment
+  - Java Runtime class provides methods to execute a process, invoke GC, get total and free memory, etc. 
+  - There is only one instance of `java.lang.Runtime` class is available for one java application. 
+  - The `Runtime.getRuntime() method returns the singleton instance of Runtime class.
+  - To invoke external process in java: `Runtime.getRuntime().exec("notepad");//will open a new notepad
+
 ## Object Oriented
 - Modularity and re-usability
 - Based on objects having data and methods
@@ -242,10 +282,39 @@ b.baseMethod(); // compile: the presence of baseMethod() in Base class is checke
 ``` 
 - Aggregation: HAS-A
 - Composition: Stronger relationship than aggregation in which one can't exist without the other. i.e Student - Class
+- Inner class can access all members of outer class
+- Anonymous inner classes
+```
+  Person p=new Person(){ void eat(){System.out.println("nice fruits");} }; // Person being an Abstract class
+```
 - 
-- Object: It is the superclass of all classes. It has `equal()`, `hash()`, `toString()`, `clone()` etc methods which classes can override
+- Object: It is the superclass of all classes. It has `equal()`, `hashCode()`, `toString()`, `clone()` etc methods which classes can override
   - How two objects are defined as equal --> override `equal()`.
-  - How to store objects uniquely in Set --> override `hash()`.
+  - How to store objects uniquely in Set --> override `hashCode()` and then `HashSet<Account> accountHashSet = new HashSet<>();`
+  ```
+  @Override
+  public int hashCode() {
+  final int prime = 31; // Choose a prime number for better distribution
+  int result = 1;
+  result = prime * result + id; // Calculate hash code based on account id
+  return result;
+  }
+  
+  // vs
+  // better performance, but it might lead to more collisions if the id values are not well distributed or if there are patterns in the id values
+  @Override
+  public int hashCode() { 
+    return id;
+  }
+  ```
+  - `toString()`:
+  ```
+  @Override
+  public String toString() {
+    return "Account{id=" + id + ", name='" + name + "'}";
+  }
+  ```
+  - `toString()` if a class hasn't overridden Object's toString method --> default toString from Object class --> class name followed by the hexadecimal representation of the object's hash code (memory address)
   - For a class object to be cloneable, it has to implement `java.lang.Cloneable`
 - Method Overloading:
   - 1. By changing number of arguments
@@ -336,38 +405,23 @@ catch(ArithmeticException ex){System.out.println(ex);}
   - m() at the top of stack and main() at the bottom
 - Output?
 ```
-public class Main   
-{  
-    void a()  
-    {  
-        try{  
+public class Main {  
+    void a() {  
+        try {  
         System.out.println("a(): Main called");  
         b();  
-        }catch(Exception e)  
-        {  
-            System.out.println("Exception is caught");  
-        }  
+        } catch(Exception e) { System.out.println("Exception is caught");}  
     }  
-    void b() throws Exception  
-    {  
-     try{  
+    void b() throws Exception {  
+     try {  
          System.out.println("b(): Main called");  
          c();  
-     }catch(Exception e){  
-         throw new Exception();  
-     }  
-     finally   
-     {  
-         System.out.println("finally block is called");  
-     }  
+     } catch(Exception e){ throw new Exception();}  
+     finally { System.out.println("finally block is called"); }  
     }  
-    void c() throws Exception   
-    {  
-        throw new Exception();  
-    }  
+    void c() throws Exception { throw new Exception(); }  
   
-    public static void main (String args[])  
-    {  
+    public static void main (String args[]) {  
         Main m = new Main();  
         m.a();  
     }  
@@ -375,34 +429,21 @@ public class Main
 ```
 - Output?
 ```
-public class Calculation   
-{  
+public class Calculation {  
     int a;   
-    public Calculation(int a)  
-    {  
-        this.a = a;  
-    }  
-    public int add()  
-    {  
+    public Calculation(int a) { this.a = a; }  
+    public int add() {  
         a = a+10;   
-        try   
-        {  
+        try {  
             a = a+10;   
-            try   
-            {  
+            try {  
                 a = a*10;   
                 throw new Exception();   
-            }catch(Exception e){  
-                a = a - 10;  
-            }  
-        }catch(Exception e)  
-        {  
-            a = a - 10;   
-        }  
+            }catch(Exception e){ a = a - 10; }  
+        }catch(Exception e)  {  a = a - 10; }  
         return a;  
     }  
-    public static void main (String args[])  
-    {  
+    public static void main (String args[]) {  
         Calculation c = new Calculation(10);  
         int result = c.add();  
         System.out.println("result = "+result);  
@@ -415,13 +456,21 @@ public class Calculation
   - Jvm check if a String is already in pool. If it exists, it returns a reference to that, if not, it creates a new string instance
   - Saves memory by avoiding duplicacy.
 
+```
+String s1 = "Welcome";
+String s2 = "Welcome"; // JVM doesn't create a new instance. It returns the reference to s1
+System.out.println(s == s2); // returns true as both point to the same memory location (20adf3f
+System.out.println(Integer.toHexString(System.identityHashCode(s))); // memory address in hexadecimal
+System.out.println(Integer.toHexString(System.identityHashCode(s2))); // memory address in hexadecimal
+```
+
 ![string-pool.png](media/string-pool.png)
 
 - Strings are immutable:
 ```
 public class StringImmutabilityExample {
     public static void main(String[] args) {
-        String str1 = "Hello"; // Create a String object "Hello"
+        String str1 = "Hello"; // Create a String object or String literal "Hello". JVM checks string pool first
         System.out.println("Original String: " + str1);
 
         // Concatenate " World" to str1 and assign the result to a new String object
@@ -435,6 +484,119 @@ public class StringImmutabilityExample {
 ==> str1 remains the same. str2 is a new string
 ```
 ![string-literal.png](media/string-literal.png)
+
+- Ways to create String
+  - Using literals: using double quotes
+  - Using new: `String s = new String("Hi");` It will create an object in heap and a String instance placed in string constant pool. s will refer to object in heap
+  - `s.intern()` returns String object reference from string pool
+- String VS StringBuffer:
+  - immutable VS mutable
+  - slow and more memory consumed when we concat too many Strings (each creating new literal) VS Fast and consume less memory
+  - String overrides `equals()` of Object clas --> `s1.equal(s2) VS StringBuffer doesn't override equals()
+- StringBuffer vs StringBuilder
+  - Thread safe (synchronized) VS Not thread-safe (non-synchronized)
+  - less efficient VS more efficient
+- Why CharArray() is preferred over String to store the password?
+  - String stays in the string pool until the garbage is collected. It stays in the memory for a longer period, and anyone having the memory-dump can extract the password as clear text.
+  - Using CharArray allows us to set it to blank whenever we are done with the password.
+
+## Regular expression (Regex) engine (java.util.regex)
+- Some classes and interfaces:
+  - MatchResult Interface
+  - Matcher class
+  - Pattern class
+  - PatternSyntaxException class
+- metacharacters (^, $, ., *, +, etc) vs ordinary characters:
+  - Metacharacters special meaning to the regular expression engine. Regex engine does not consider them as the regular characters. 
+  - To enable the regular expression engine treating the metacharacters as ordinary characters, we need to escape them with the backslash.
+- A password must start with an alphabet and followed by alphanumeric characters; Its length must be in between 8 to 20:
+  - `^[a-zA-Z][a-zA-Z0-9]{8,19}`
+    - `^`: start of regex
+    - `[a-zA-Z]`: alphabet
+    - `[a-zA-Z0-9]`: Alphanumeric
+    - `{8,19}`: Size between 8 and 20
+- `Pattern.matches(".s", "as")`=> string of size 2 => true similarly `7s`, `rs`, `!s` but not `abs
+  - `.`: matches any single character except `\n`
+
+## IO Stream - InputStream and OutputStream
+- IO Stream: a sequence of data that flows from source to destination. It is composed of bytes. 
+- In Java, three streams are created for us automatically.
+  - System.out: standard output stream
+  - System.in: standard input stream
+  - System.err: standard error stream
+- Reader/Writer vs InputStream/OutputStream
+  - Character-oriented vs Class-oriented
+  - CharacterStream: perform the input/output for the 16-bit Unicode system vs ByteStream: perform input-output of 8-bit bytes
+  - `FileInputStream and FileOutputStream` vs `FileInputStream and FileOutputStream`
+  - FileOutputStream: is an output stream used for writing data to a file.
+  - FileInputStream: obtains input bytes from a file.
+
+![io-stream.png](media/io-stream.png)
+
+```
+public static void main(String args[]) {
+	try {
+		FileInputStream fin = new FileInputStream("D:\\testout.txt");
+		int i = fin.read();
+		System.out.print((char) i);
+		fin.close();
+	} catch (Exception e) {
+		System.out.println(e);
+	}
+}
+
+public static void main(String args[]) {
+	try {
+		FileOutputStream fout = new FileOutputStream("D:\\testout.txt");
+		fout.write(65);
+		fout.close();
+		System.out.println("success...");
+	} catch (Exception e) {
+		System.out.println(e);
+	}
+}   
+```
+- Purpose of BufferedInputStream and BufferedOutputStream
+  - BufferedOutputStream internally uses a buffer to store data. It adds more efficiency than to write data directly into a stream.
+  - BufferedInputStream class is used to read information from the stream. It internally uses the buffer mechanism to make the performance fast.
+- I/O filter is an object that reads from one stream and writes to another, usually altering the data in some way as it is passed from one stream to another.
+- Ways you can take input from the console
+  - Using BufferedReader class
+  - Using Scanner class
+  - Using Console class:
+
+## Serialization/Deserialization
+- Serialization is a mechanism of writing the state of an object into a byte stream. 
+- It is used primarily in Hibernate, RMI, JPA, EJB and JMS technologies or to transmit it over the network
+- Serializable: by implementing the Serializable interface
+![serialization-deserialization.png](media/serialization-deserialization.png)
+- Avoid serialization of subclass if baseclass is serializable: writeObject() or readObject() methods in the subclass and throw NotSerializableException
+- `transient`: it will not be serialized.
+- Serializable and Externalizable
+  - marker vs not marker
+  - easier but less performant vs better performance
+  - no control vs more control using `readExternal()` and `writeExternal()
+
+## Java socket programming:
+- Used for communication between the applications running on different JRE
+- connection-oriented or connectionless
+- Socket and ServerSocket classes => connection-oriented socket programming and 
+- DatagramSocket, and DatagramPacket classes => connectionless socket programming. 
+- The client in socket programming must know two information:
+  - IP address of the server 
+  - port number
+- A socket is simply an endpoint for communications between the machines. 
+  - Provides connection mechanism to connect the two computers using TCP. The Socket class can be used to create a socket.
+- Steps followed when two computers connect through TCP:
+  - The ServerSocket object is instantiated by the server which denotes the port number to which, the connection will be made. 
+  - After instantiating the ServerSocket object, the server invokes accept() method of ServerSocket class which makes server wait until the client attempts to connect to the server on the given port. 
+  - Meanwhile, the server is waiting, a socket is created by the client by instantiating Socket class. The socket class constructor accepts the server port number and server name.
+  - The Socket class constructor attempts to connect with the server on the specified name. If the connection is established, the client will have a socket object that can communicate with the server. 
+  - The accept() method invoked by the server returns a reference to the new socket on the server that is connected with the server.
+- A program in Java to establish a connection between client and server:
+- Convert numeric IP address 192.18.97.39 into a hostname like java.sun.com:
+- 
+
 # Java and Imperative vs Declarative Programming
 ## Imperative
 - Focuses on describing how to achieve a specific result step by step
