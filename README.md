@@ -10,6 +10,8 @@
   * [IO Stream - InputStream and OutputStream](#io-stream---inputstream-and-outputstream)
   * [Serialization/Deserialization](#serializationdeserialization)
   * [Java socket programming:](#java-socket-programming)
+  * [Reflection:](#reflection)
+  * [Internationalization](#internationalization)
 * [Java and Imperative vs Declarative Programming](#java-and-imperative-vs-declarative-programming)
   * [Imperative](#imperative)
   * [Declarative:](#declarative)
@@ -290,7 +292,14 @@ b.baseMethod(); // compile: the presence of baseMethod() in Base class is checke
 - 
 - Object: It is the superclass of all classes. It has `equal()`, `hashCode()`, `toString()`, `clone()` etc methods which classes can override
   - How two objects are defined as equal --> override `equal()`.
+  - Advantages vs Disadvantages of cloning
   - How to store objects uniquely in Set --> override `hashCode()` and then `HashSet<Account> accountHashSet = new HashSet<>();`
+  - The hashCode() method returns the same integer number if two keys (by calling equals() method) are identical.
+  - hash-collision in Hashtable
+    - Two different keys with the same hash value are known as hash-collision
+    - ways to avoid hash-collision. 
+      - Separate Chaining 
+      - Open Addressing
   ```
   @Override
   public int hashCode() {
@@ -595,7 +604,98 @@ public static void main(String args[]) {
   - The accept() method invoked by the server returns a reference to the new socket on the server that is connected with the server.
 - A program in Java to establish a connection between client and server:
 - Convert numeric IP address 192.18.97.39 into a hostname like java.sun.com:
-- 
+
+## Reflection:
+- Process of examining or modifying the runtime behavior of a class at runtime. 
+- The java.lang.Class class provides various methods that can be used to get metadata, examine and change the runtime behavior of a class. 
+- `java.lang` and `java.lang.reflect` classes for java reflection. 
+- It is used in:
+  - IDE (Integrated Development Environment), e.g., Eclipse, MyEclipse, NetBeans. 
+  - Debugger 
+  - Test Tools, etc.
+- Instantiate the Class class
+  - forName() method of Class class
+  - getClass() method of Object class
+  - the .class syntax:
+  ```
+  Class c=Class.forName("Simple");    
+  Simple s=(Simple)c.newInstance(); //of the Class class is used to invoke the constructor at runtime 
+  s.message();  
+  ```
+- Wrapper classes and Boxing/Unboxing: i.e boolean => Boolean
+- Native methods:
+  - Methods implemented in other languages and called in java
+- Purpose of System class:
+  - Access to resources like i/o, err
+- RMI allows an object to invoke methods on an object running in another JVM
+  - Stub and skeleton
+  - Step in writing RMI based programs
+## Internationalization
+- Locale: A Locale object represents a specific geographical, political, or cultural region. 
+  - Get the locale-specific information such as country name, language, variant, etc.
+
+## Data Structure and Algorithm using Java
+- Bubble Sort
+- Selection Sort
+- Merge Sort
+- Quick Sort
+- Linear Search
+- Binary Search
+- Double linked list with n nodes
+- Get Maximum and minimum value node from a circular linked list
+- Calculate the difference between the sum of the odd level and even level nodes of a Binary Tree
+
+## Multithreading and Concurrency in Java
+- Multithreading: Executing multiple threads simultaneously.
+- A thread is a lightweight subprocess.
+- process vs thread
+  - A Program in the execution is called the process whereas; A thread is a subset of the process
+  - Process have different address space in memory, while threads contain a shared address space.
+  - Context switching is faster between the threads as compared to processes
+- Inter-thread communication:
+  - wait(): Pause current thread
+  - notify()
+  - notifyAll()
+![thread-lifecycles.png](media/thread-lifecycles.png)
+
+## Java Collection:
+- Classes: ArrayList, Vector, Stack, HashSet
+- Interfaces: List, Queue, Set
+- Arrays vs Collection:
+  - fixed size vs collection size can be changed dynamically
+  - homogenous vs heterogeneous
+- Interfaces:
+  - Collection: Primary interface which every collection must implement `public interface Collection<E>extends Iterable`
+  - List: Ordered collection of objects, contains duplicate, allow random access `public interface List<E> extends Collection<E>`
+  - Queue: queue data structure in FIFO form
+  - Dequeue: double-ended queue. Allows the insertion and removal of elements from both ends. Stack + Queue => LIFO and FIFO
+    - `public interface Dequeue<E> extends Queue<E>`
+  - Map: key-value pair storage of elements
+- ArrayList vs LinkedList:
+  - ArrayList uses a dynamic array.	LinkedList uses a doubly linked list. 
+    - not efficient for manipulation because too much is required vs efficient for manipulation.
+    - Better to store and fetch data vs better to manipulate data. 
+    - random access vs provide no random access. 
+    - less memory overhead as it stores only object	vs takes more memory overhead as it stores the object and the address of that object.
+- Iterator vs ListIterator:
+  - Traverses the elements in the forward direction vs traverses the elements in backward and forward directions both. 
+  - Used in List, Set, and Queues vs can be used in List only. 
+  - can only perform remove operation while traversing the collection vs can perform add, remove, and set operation while traversing the collection.
+- List vs Set
+  - duplicate vs unique
+  - ordered vs unordered (insertion order is not preserved)
+- Hashset vs TreeSet
+  - No order vs ascending order. 
+  - impended by hash table vs implemented by a Tree structure. 
+  - HashSet performs faster than TreeSet. 
+  - HashSet is backed by HashMap whereas TreeSet is backed by TreeMap.
+- HashMap vs TreeMap
+- Collection vs Collections (class)
+- Comparable vs Comparator
+- BlockingQueue:
+  - Thread-safe
+  - Concurrency in the operations like retrieval, insertion, deletion
+
 
 # Java and Imperative vs Declarative Programming
 ## Imperative
