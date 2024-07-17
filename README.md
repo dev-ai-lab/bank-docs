@@ -29,6 +29,8 @@
     * [New Date and Time API (java.time)](#new-date-and-time-api-javatime)
 * [Domain Driven Design (DDD)](#domain-driven-design-ddd)
   * [Identify domain context and service boundaries](#identify-domain-context-and-service-boundaries)
+* [Clean API Documentation - OpenAPI / Swagger](#clean-api-documentation---openapi--swagger)
+  * [Decoration of API using annotations](#decoration-of-api-using-annotations)
 * [Deployment, Portability, and Scalability](#deployment-portability-and-scalability)
 * [Docker](#docker-)
   * [Build Image](#build-image)
@@ -47,9 +49,22 @@
     * [Using webhook to avoid manual work](#using-webhook-to-avoid-manual-work)
 * [Docker Compose](#docker-compose)
 * [Database](#database)
+  * [AWS RDS - Aurora](#aws-rds---aurora)
+    * [Resource creation](#resource-creation)
+    * [Backups](#backups)
+    * [RDS Security Groups](#rds-security-groups)
+    * [RDS and IAM](#rds-and-iam)
+    * [RDS Parameter Groups](#rds-parameter-groups)
+    * [Option group](#option-group)
+    * [RDS Proxy](#rds-proxy)
+    * [Multi-AZ RDS](#multi-az-rds)
+    * [Read Replicas](#read-replicas)
+    * [Aurora DB](#aurora-db)
+      * [Aurora DB creation:](#aurora-db-creation)
 * [Service Discovery](#service-discovery)
 * [Routing, Cross cutting concern in microservices](#routing-cross-cutting-concern-in-microservices)
   * [Spring Cloud Gateway](#spring-cloud-gateway)
+  * [Apigee - API management](#apigee---api-management)
 * [Resiliency in microservices](#resiliency-in-microservices)
   * [Resiliency in Spring Cloud Gateway](#resiliency-in-spring-cloud-gateway)
     * [Fallback for circuit breaker](#fallback-for-circuit-breaker)
@@ -132,6 +147,8 @@
   * [Public key Infrastructure (PKI)](#public-key-infrastructure-pki)
   * [Web Security](#web-security)
 * [Spring Framework](#spring-framework)
+  * [Spring Web](#spring-web)
+    * [Spring Web Security](#spring-web-security)
   * [Spring Testing Ecosystem](#spring-testing-ecosystem)
   * [Spring Data (JPA)](#spring-data-jpa-)
 * [SQL Codebook](#sql-codebook)
@@ -159,8 +176,13 @@
   * [VIEWS](#views)
   * [Import and Export in pgAdmin](#import-and-export-in-pgadmin)
   * [EXTRA: Postgres with Python](#extra-postgres-with-python)
+    * [Python Basics](#python-basics)
+    * [Python Setup](#python-setup)
 * [BPMN with Camunda](#bpmn-with-camunda)
-* [ChatGPT as developer assistance](#chatgpt-as-developer-assistance-)
+* [Generative AI:](#generative-ai)
+  * [OpenAI](#openai)
+  * [Main Topic in GenAI](#main-topic-in-genai)
+  * [ChatGPT as developer assistance](#chatgpt-as-developer-assistance-)
   * [](#)
 <!-- TOC -->
 
@@ -529,6 +551,25 @@ public class StringImmutabilityExample {
     - `{8,19}`: Size between 8 and 20
 - `Pattern.matches(".s", "as")`=> string of size 2 => true similarly `7s`, `rs`, `!s` but not `abs
   - `.`: matches any single character except `\n`
+- Get part-one and part-two from part-one.agentNumber=part-two
+```
+Pattern pattern = Pattern.compile("^(.*?)\\.agentNumber=(.*)$");
+// Match the pattern against the input string
+Matcher matcher = pattern.matcher(input);
+
+if (matcher.find()) {
+    // Extract part-one and part-two
+    String partOne = matcher.group(1);
+    String partTwo = matcher.group(2);
+    ..
+```
+- Explanation:
+  1. `^`: Start of the string.
+  2. `(.*?)`: First capturing group denoted by parentheses ( ). The . matches any character except a newline. The *? is a quantifier that matches the preceding element (. in this case) zero or more times, but as few times as possible. This is because of the ? which makes the * non-greedy, meaning it will match as few characters as possible to satisfy the overall pattern. This captures part-one.
+  3. `\\.`: This part matches the dot character . literally. In Java, the backslash \ is an escape character, so to match a literal dot, we need to escape it with another backslash, hence `\\.`.
+  4. agentNumber=: This matches the literal string "agentNumber=".
+  5. (.*): This is the second capturing group, capturing part-two. The .* matches any character (except newline) zero or more times. This captures part-two. 
+  6. $: Signifies the end of the string. In a regular expression, it asserts that the preceding pattern must appear at the end of the input string.
 
 ## IO Stream - InputStream and OutputStream
 - IO Stream: a sequence of data that flows from source to destination. It is composed of bytes. 
@@ -873,6 +914,22 @@ Comparator<Integer> comp = Integer::compareTo;
 - Event-storming sizing - faster
   - --> https://www.lucidchart.com/blog/ddd-event-storming
 
+# Clean API Documentation - OpenAPI / Swagger
+- Swagger will be available under this path: http://{server-url}/swagger-ui/index.html 
+- openapi json under /v3/api-docs 
+- These endpoints are whitelisted in Websecurity config
+```
+<!-- If spring boot is based on Webmvc instead of Webflux -->
+<dependency>
+    <groupId>org.springdoc</groupId>
+	<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+	<version>2.3.0</version>
+</dependency>
+```
+## Decoration of API using annotations
+- Use @OpenAPIDefinition on the main application for top-level decorations
+- Use @Tag, @Operation, @ApiResponses in RestController
+
 # Deployment, Portability, and Scalability
 - Containerization help achieve these like docker
 - Container is easy to create and destroy
@@ -1063,6 +1120,151 @@ docker run -p 3306:3306 --name bank-account-db -e MYSQL_ROOT_PASSWORD=root -e MY
 In order to connect with db, use [SQLECTRON](https://sqlectron.github.io/) and `localhost:3306`.
 Create database for microservice and expose in different port in local machine.
 
+## AWS RDS - Aurora
+- RDS: Supports MySQL, MariaDB, PostgreSQL, Oracle, Ms SQL, and Aurora
+- EBS volume used - auto-scaling
+- Billing based on:
+  - Storage Capacity used
+  - I/O requests per month
+  - Backup Storage used
+  - Data Transfers
+- On-demand instances (Pay-as-you-go)
+- VPC concept
+### Resource creation
+- VPC creation:
+  - Go to AWS, search VPC and create one
+- RDS creation:
+  1. Go to AWS RDS resource
+  2. Create new `Subnet Group`
+     1. Use created VPC 
+     2. Use created `Subnets`
+  3. Go to `Create Database` and select the right DB instance to create
+     1. Storage setup:
+        1. gp3:
+        2. Allocated storage size
+        3. `Enable storage autoscaling`
+        4. Max storage and scaling at rate of `10%`
+  4. Connectivity Setup 
+     1. Don't connect to an EC2 vs Setup connection to a EC2 instance
+  5. Choose subnet group created in `2.`
+  6. Create security group. It a place with port to access RDS instances. It is created under VPC
+
+### Backups
+- RDS automated backup (takes snapshot)
+- RDS snapshots (manual)
+- Under `Maintenance and Backups` one can find restore option and manual snapshot
+- Snapshots can be copied and shared: in `Actions`. However, an automated backup can't be shared. It can only be copied
+  - can be copied to another region.
+  - with this method, a DB can be moved to another region (from frankfurt to london). In london, go to RDS->snapshots
+  - Can be shared with another aws account (using account id). Go to that account: RDS->snapshots->shared with me
+    - The snapshot is encrypted. The other account should have access to ecryption in order to restore the DB
+### RDS Security Groups
+- RDS shouldn't be accessible to the internet (should reside in private subnet)
+- Security group (stateful firewall)
+- In addition to security group, one can configure network ACL (not stateful firewall)
+
+### RDS and IAM
+- Users, groups, roles, policies
+- Authenticate with IAM:
+  - Steps:
+    - IAM ROLE X --> i.e
+    - Assign X role to an EC2 (like ID card)
+    - EC2 presents ID to RDS instance. RDS has a user associated with this ID coming from EC2
+- Authenticate with `Secrets Manager`
+  - Rotation schedule (lambda) to change it constantly
+  - EC2 get a role to retrieve credentials from Secret Manager and use it to connect to RDS
+
+### RDS Parameter Groups
+- To configure DB, we use parameter group (PG)
+- A PG can be applied to more instance of RDS
+- Under DB instance --> Configuration --> find the Parameter Group used
+  - One can edit the PG and add new values for any parameters listed.
+### Option group
+
+### RDS Proxy
+- It manages incoming connections to prevent the db from being overwhelmed
+- Improves db scalability when many users
+- Enhance Security by being in-between
+- Caching for common queries - improved performance by 
+- So it is basically a loadbalancer thing
+- Can be integrated with IAM and AWS secret manager
+
+### Multi-AZ RDS
+- Think of it as a set of data centers
+  - Primary (Master) instance in one zone 
+  - Standby in another zone
+- Primary goal is improving availability and no performance benefits
+- Data sync between master and standby each 5 minutes
+- Failover in 1 to 2 minutes
+- Upgrade: first on standby, reroute traffic to standby and so on
+- Backups can be taken from standby to avoid impacts
+- We can convert an instance into multi-az
+
+### Read Replicas
+- Improves performance and readability
+- Async replicas
+- Up to 5 copies (cross AZ and cross region). Read client in a different region can use that region's read replica
+  - Read on a replica
+  - Write on the master
+- Read replica can be promoted to master
+- A read replica can have master and standby as in normal case
+- Read replicas and sharding (i.e halving the DB). Master with Read replica. Read replica then promoted to master and replication link broken
+- Hands-on: DB --> Actions --> Add reader (choose a region, multi-az?, ): snapshot is taken from master instance
+![VPC-AWS-RDS.png](media/VPC-AWS-RDS.png)
+
+### Aurora DB
+- 3 times the performance of postgres and 5 time the performance of mysql
+- Support upto 15 read replicas that supports auto-scaling
+- Cluster (write) endpoints
+- Aurora Storage:
+  - Aurora I/O-Optimized:
+    - For i/o intensive use cases
+    - But more expensive per GB
+    - Not paying for read and writes
+  - Aurora Standard
+    - Cheaper per GB
+- Cache Scenario
+  - Write through cache
+  - A complex query is come again, is already stored
+- Aurora High Availability:
+- Aurora Global Databases
+  - Acorss multiple regions
+  - Upto 5 secondary regions
+  - If one region fails it fail over to another region
+- Aurora Serverless:
+  - Scaling provisioned cluster can be challenging
+  - Aurora serverless scales automatically (By automatically adjusting DB CPU, memory, network capacity)
+    - Elastic scaling
+  - One can add a serverless cluster on top of provisioned cluster. i.e Writer is provisioned while readers are serverless and vise versa
+- Aurora Instance Class:
+  - Provisioned
+    - db.r7g.large: graviton
+    - r is memory optimized
+  - Serverless
+    - Instance class types
+      - Intel, graviton
+      - Memory optimized
+  - prices are determined based on those classes
+  - decide based on use cases in hand
+
+#### Aurora DB creation:
+- Enable global database flag
+- One can configure EC2 instance to connect to the DB
+- Security group selection
+- RDS proxy
+- Database port choice
+- encryption choice
+- Failover priority: assign priority (1 - 16)
+- Reader and writer are two different endpoints
+  - Add additional reader instance
+- Add a serverless reader:
+  - Add reader --> Serverless v2 --> ACU (Aurora Capacity Unity)
+  - No matter how many readers, the endpoint is one and the same
+  - Any reader with high failover priority will overtake a failing primary writer
+- Create a serverless Aurora cluster
+  - Create RDS and choose serverless v2 class
+- Create an Aurora global database:
+  - Add a new region to the cluster which renders it as global
 # Service Discovery
 - - IPs of new instance is short-lived and changes often
 - How do microservices locate each other inside a network?
@@ -1136,6 +1338,28 @@ Finally GW service starts.
 
 - Gateway [routes](http://localhost:8072/actuator/gateway/routes)
 
+
+## Apigee - API management
+- Securely expose bare APIs API key, OAuth or JWT
+- API analytics for usage visibility
+- API proxy - is a wrapper for your service i.e client calls proxy and proxy calls your server
+  - why? enforce app independent mechanism for api management with respect to security, url design, data model, token verification, rate limit, hashing and analytics etc
+- API policy: 
+  - create product which wraps api proxy
+  - create app which holds api key
+  - add developer which owns the app
+  - use that api key to call the proxy
+- apigee has over 30 policies (traffic, security, message manipulation) and add custom code
+- You have full control over request and response
+- Apigee tracing:
+  - you can trace a request and check steps followed for the request
+- API portal in Apigee
+  - publish api products with clear docs
+  - consumer can learn and consume the API
+  - web, text, asset (images, videos)
+- API analytics:
+  - Exposing API, enable other to consume your API, and visibility (API analytics)
+  - API analytics: usage, error rates, geographic distribution etc
 # Resiliency in microservices
 - To avoid problem cascading if one service is failing
 ## Resiliency in Spring Cloud Gateway
@@ -2029,6 +2253,14 @@ If in comment section of a website one inserts below, it will be rendered.
 ## Web Security
 
 # Spring Framework
+## Spring Web
+### Spring Web Security
+- If Spring starter-security is on the classpath, then web applications are secured by default.
+- To switch off the default security configuration completely or to combine other components such as OAuth2 Client and Resource Server:
+  - Add a bean of type `SecurityFilterChain`: This is recommended instead of extending `WebSecurityConfigurerAdapter`. [See](https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter)
+- Add `http.csrf(AbstractHttpConfigurer::disable)` is important if you call endpoint using swagger-ui, otherwise the API throws 403
+- For OAuth2, [check](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#web.security.oauth2) and bank-services
+- 
 
 ## Spring Testing Ecosystem
 
@@ -2037,7 +2269,6 @@ If in comment section of a website one inserts below, it will be rendered.
 - access these fields
 - @Transactional mechanism
 - i.e from work
-
 
 # SQL Codebook
 - Main frame: Business queries to database language
@@ -2605,10 +2836,15 @@ ALTER VIEW customer_mailing_address RENAME TO customer_address_view
   - Remember to have values for all column including serial fields
 
 ## EXTRA: Postgres with Python
+### Python Basics
+- Refer to [this](https://github.com/dev-ai-lab/generative-ai-practice.git)
+### Python Setup
 - `python3 --version` in macos
 - `pip3`
 - Install [JupyterLab](https://jupyter.org/install) using pip3 and start it `jupyter lab`
 - Install pyscopg `pip3 install pyscopg`
+  - `pip3` is a package manager
+  - `python3` is the command used to run python code
 - When we have Postgres.App instead of an installed Postgres, we need to make sure JupyterLab is able to find libpq
 - DYLD_LIBRARY_PATH is an environment variable used on macOS to specify additional directories to search for dynamic libraries. 
 In the context of Postgres.App, which is a self-contained application bundle that includes the PostgreSQL database server and related tools, 
@@ -2646,9 +2882,93 @@ except (Exception, pg.Error) as error:
 - To trigger process start at runtime, one would need `/META-INF/processes.xml` in classpath
 - All bpmns found in the classpath will be deployed if auto deployment is true
 
-# ChatGPT as developer assistance 
+# Generative AI:
+- Generate new text, image, video or audio as we instruct it.
+  - use Artificial neural networks to understand patterns in data
+  - emerged from a variety of tech. being applied for decades
+  - Computationally intensive
+- AI --> Neural Networks --> ML --> Generative Models
+- Traditional AI ML vs GenAI
+  - Prediction using classification and regression vs Generate new data using patterns
+  - trained with less data vs needs huge data
+- GenAI use cases:
+  - Customer experience and retention, revenue growth, cost optimization, business continuity
+  - Textual data, coding, educational, marketing and SEO, customer service, human resource, customer service and support, content creation,
+  chatbots, language translation, research and analysis
+- Usage domains: Text generation (chatGPT, Bedrock, Bard etc), code generation (Github Copilot), image generation (DALL-E), 
+ Model dev. and dep. (Azure ML), Base LLMs (GPT-4: dev. a website or a game)
+## OpenAI
+- ChatGPT, 
+- DALL-E, 
+- API: integrate OpenAPI to your system
+
+## Main Topic in GenAI
+- Iterative Prompt Engineering: idea --> implementation prompt --> experimental result --> error analysis and feedback
+  - Good command of language
+  - Creativity
+  - Critical thinking
+  - Subject matter expertise of the specific domain
+- Follow some principles to make good results such as using delimiters and examples, going step by step, give AI an persona role i.e userx
+- Summarizing, inferring, transforming, expanding
+- Roles: System --> Assistant (ChatGPT - LLM) --> User
+
+```
+review1: "xxxx ccc"
+prompt = "What is the sentiment of the following product review which is delimited with tripple backticks?
+          Review text: ```review1```"
+response = Generate_Content(prompt)
+print(response)
+```
+```
+prompt = "Identify the list of emotions that the writer of the review is expressing. Include no more that five items in the list and format xxxx"
+prompt = "Is the user expressing anger" --> yes
+```
+- moderation api is used for moderating contents like violence, crime etc. It will quantify them as well
+  - It is required by laws
+```
+curl https://api.openai.com/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "model": "gpt-3.5-turbo",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful assistant."
+      },
+      {
+        "role": "user",
+        "content": "Who won the world series in 2020?"
+      },
+      {
+        "role": "assistant",
+        "content": "The Los Angeles Dodgers won the World Series in 2020."
+      },
+      {
+        "role": "user",
+        "content": "Where was it played?"
+      }
+    ]
+  }'
+  
+```
+```
+completion.choices[0].message.content
+```
+- Prompt chaining: to help AI tool know how to proceed. it breaks down the complex problem into multiple steps
+- LangChain: For performing complex tasks. Prompts and chaining are integral to langchain
+  - python module is langchain
+  - It creates a memory at AI side and the AI remembers context from previous interaction
+  - Langchain has 4 memory types: See [here](https://python.langchain.com/docs/modules/memory/types/).
+  - LangChain Agents: The core idea of agents is to use a language model to choose a sequence of actions to take. see [here](https://python.langchain.com/docs/modules/agents/)
+  - 
+![versed-prompt.jpeg](media/versed-prompt.jpeg)
+## ChatGPT as developer assistance 
 - Very handy in terms of usual code quality checkup, test, knowledge refresh etc
 - Prompt Engineering is the emerging term
 - Just type: `Nullif use case with example using postgres` and see the wonder
-
+- Github Copilot is an integration of AI into development activities by prompting code samples to the developer.
+  - It is similar to pair programming where one pair is a smart AI system
+  - Improve productivity of developers
+  - Visual Studio Code works best: Extensions: `Github Copilot` and `Github Copilot Labs`
 ## 
