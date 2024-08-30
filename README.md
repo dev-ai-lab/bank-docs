@@ -19,109 +19,55 @@
   * [Imperative](#imperative)
   * [Declarative:](#declarative)
   * [Modern Java Features](#modern-java-features)
-    * [Functional Interface](#functional-interface)
-    * [Constructor and Method References](#constructor-and-method-references)
-    * [Lambdas](#lambdas)
-    * [Streaming API](#streaming-api)
-    * [Optionals](#optionals)
-    * [Concurrency and Immutability](#concurrency-and-immutability)
-    * [Default and Static methods:](#default-and-static-methods)
-    * [New Date and Time API (java.time)](#new-date-and-time-api-javatime)
 * [Domain Driven Design (DDD)](#domain-driven-design-ddd)
   * [Identify domain context and service boundaries](#identify-domain-context-and-service-boundaries)
+* [Cloud Native Application](#cloud-native-application)
+  * [Beyond 12-factor apps](#beyond-12-factor-apps)
 * [Clean API Documentation - OpenAPI / Swagger](#clean-api-documentation---openapi--swagger)
   * [Decoration of API using annotations](#decoration-of-api-using-annotations)
 * [Deployment, Portability, and Scalability](#deployment-portability-and-scalability)
-* [Docker](#docker-)
-  * [Build Image](#build-image)
-  * [Running docker](#running-docker)
-  * [Docker Dashboard](#docker-dashboard)
-* [Cloud Native Application](#cloud-native-application)
-  * [Beyond 12-factor apps](#beyond-12-factor-apps)
+  * [Docker](#docker-)
+  * [Docker Compose](#docker-compose)
 * [Configuration](#configuration)
   * [Spring Cloud Config Server](#spring-cloud-config-server)
-    * [Check properties](#check-properties)
-    * [Profiles](#profiles)
-    * [Encryption](#encryption)
   * [Change config at runtime](#change-config-at-runtime)
-    * [Spring cloud bus](#spring-cloud-bus)
-      * [Demo](#demo)
-    * [Using webhook to avoid manual work](#using-webhook-to-avoid-manual-work)
-* [Docker Compose](#docker-compose)
 * [Database](#database)
   * [AWS RDS - Aurora](#aws-rds---aurora)
-    * [Resource creation](#resource-creation)
-    * [Backups](#backups)
-    * [RDS Security Groups](#rds-security-groups)
-    * [RDS and IAM](#rds-and-iam)
-    * [RDS Parameter Groups](#rds-parameter-groups)
-    * [Option group](#option-group)
-    * [RDS Proxy](#rds-proxy)
-    * [Multi-AZ RDS](#multi-az-rds)
-    * [Read Replicas](#read-replicas)
-    * [Aurora DB](#aurora-db)
-      * [Aurora DB creation:](#aurora-db-creation)
 * [Service Discovery](#service-discovery)
 * [Routing, Cross cutting concern in microservices](#routing-cross-cutting-concern-in-microservices)
   * [Spring Cloud Gateway](#spring-cloud-gateway)
   * [Apigee - API management](#apigee---api-management)
 * [Resiliency in microservices](#resiliency-in-microservices)
   * [Resiliency in Spring Cloud Gateway](#resiliency-in-spring-cloud-gateway)
-    * [Fallback for circuit breaker](#fallback-for-circuit-breaker)
   * [Circuit breaker using Feign Client in Account microservices](#circuit-breaker-using-feign-client-in-account-microservices)
   * [Http timeout config:](#http-timeout-config-)
   * [Retry Pattern with Backoff Strategy](#retry-pattern-with-backoff-strategy)
   * [Rate Limiter Pattern](#rate-limiter-pattern)
-    * [Rate Limiter in spring gateway](#rate-limiter-in-spring-gateway)
-      * [Redis implementation (Stripe)](#redis-implementation-stripe)
-        * [Demo](#demo-1)
-    * [Ratelimiter inside individual microservice](#ratelimiter-inside-individual-microservice)
   * [Bulkhead patterns](#bulkhead-patterns)
   * [Aspect Order](#aspect-order)
 * [Observability and Monitoring](#observability-and-monitoring)
   * [Log, metrics, traces](#log-metrics-traces)
   * [Prometheus and micrometer Demo](#prometheus-and-micrometer-demo)
-    * [Alerting in Grafana](#alerting-in-grafana)
 * [Distributed Tracing](#distributed-tracing)
 * [Securing microservices:](#securing-microservices)
   * [Why OAuth2 (Open Authorization)](#why-oauth2-open-authorization)
   * [OpenID Connect](#openid-connect)
-    * [Implementations](#implementations)
   * [Flow](#flow)
-    * [Grant Type Flow](#grant-type-flow)
   * [Demo](#demo-2)
   * [Making Gateway server as Resource server](#making-gateway-server-as-resource-server)
-    * [Authentication](#authentication)
-    * [Authorization using Roles](#authorization-using-roles)
   * [Authorization code grant type flow](#authorization-code-grant-type-flow)
 * [Event driven microservices](#event-driven-microservices)
   * [Pub/Sub using RabbitMQ](#pubsub-using-rabbitmq)
-    * [Spring Cloud Functions features:](#spring-cloud-functions-features)
-    * [Spring cloud streams](#spring-cloud-streams)
-    * [Spring cloud function for messaging microservice](#spring-cloud-function-for-messaging-microservice)
   * [Using Kafka](#using-kafka)
-    * [Kafka vs RabbitMQ](#kafka-vs-rabbitmq)
-    * [Key concepts](#key-concepts)
-    * [Key knowledge points:](#key-knowledge-points)
-    * [Setup](#setup)
-      * [Setup Kafka cluster locally](#setup-kafka-cluster-locally)
-      * [Configure microservices to connect](#configure-microservices-to-connect)
-      * [Kafka setup in docker compose](#kafka-setup-in-docker-compose)
+
 * [Orchestration - Kubernetes](#orchestration---kubernetes)
   * [Key concepts](#key-concepts-1)
   * [Setup](#setup-1)
   * [Kubernetes Yaml Config](#kubernetes-yaml-config)
-    * [Scaling up and down](#scaling-up-and-down)
   * [Kubernetes Service Types](#kubernetes-service-types)
   * [Why helm](#why-helm)
-    * [Installing Helm](#installing-helm)
-    * [Additional helm commands](#additional-helm-commands)
-    * [Helm Structure](#helm-structure)
-    * [Helm chart for our Microservices](#helm-chart-for-our-microservices)
-    * [Upgrade chart - Roll in and Roll out](#upgrade-chart---roll-in-and-roll-out)
 * [Server side load balancing](#server-side-load-balancing)
   * [Demo](#demo-3)
-* [Deploying on public cloud](#deploying-on-public-cloud)
 * [Kubernetes Ingress, Service mesh (Istio) and mTLS](#kubernetes-ingress-service-mesh-istio-and-mtls)
   * [Ingress](#ingress)
   * [Types of traffic:](#types-of-traffic)
@@ -129,26 +75,21 @@
   * [Service mesh:](#service-mesh-)
   * [Capabilities:](#capabilities)
   * [Service mesh components](#service-mesh-components)
-    * [TLS](#tls)
-    * [mTLS](#mtls)
-      * [Advantages of mTLS](#advantages-of-mtls)
   * [Popular service meshes:](#popular-service-meshes)
 * [Microservice code architecture](#microservice-code-architecture)
   * [Port Adapter and Onion Architecture](#port-adapter-and-onion-architecture)
+
+* [Deploying on public cloud](#deploying-on-public-cloud)
+
 * [JAVA - Security](#java---security)
   * [Security Libraries:](#security-libraries)
   * [Code Injection Prevention:](#code-injection-prevention)
-    * [SQL injection](#sql-injection)
-    * [Encoding Reserved Control Sequences](#encoding-reserved-control-sequences)
-    * [XML Parser Defense](#xml-parser-defense)
-    * [JAAS](#jaas)
   * [Cryptography](#cryptography)
   * [Secure Communication](#secure-communication)
   * [Public key Infrastructure (PKI)](#public-key-infrastructure-pki)
   * [Web Security](#web-security)
 * [Spring Framework](#spring-framework)
   * [Spring Web](#spring-web)
-    * [Spring Web Security](#spring-web-security)
   * [Spring Testing Ecosystem](#spring-testing-ecosystem)
   * [Spring Data (JPA)](#spring-data-jpa-)
 * [SQL Codebook](#sql-codebook)
@@ -156,28 +97,13 @@
   * [Cheat sheet](#cheat-sheet)
   * [GROUP BY and Aggregate functions](#group-by-and-aggregate-functions)
   * [JOINS](#joins)
-    * [INNER JOIN will result with the set of records that match in both tables - Intersection of both](#inner-join-will-result-with-the-set-of-records-that-match-in-both-tables---intersection-of-both)
-    * [Outer Joins](#outer-joins)
-    * [UNION](#union)
   * [Advanced SQL commands](#advanced-sql-commands)
-    * [Mathematical Functions and Operators](#mathematical-functions-and-operators)
-    * [String functions and operators](#string-functions-and-operators)
-    * [Subquery](#subquery)
-    * [Self-Join](#self-join)
-    * [PgAdmin](#pgadmin)
   * [Additional Examples](#additional-examples)
   * [Creating databases and tables](#creating-databases-and-tables)
-    * [Data types:](#data-types-)
-    * [Constraints:](#constraints)
-      * [CHECK](#check)
-      * [ALTER](#alter)
-      * [DROP column](#drop-column)
   * [Conditional expression and procedures](#conditional-expression-and-procedures)
   * [VIEWS](#views)
   * [Import and Export in pgAdmin](#import-and-export-in-pgadmin)
   * [EXTRA: Postgres with Python](#extra-postgres-with-python)
-    * [Python Basics](#python-basics)
-    * [Python Setup](#python-setup)
 * [BPMN with Camunda](#bpmn-with-camunda)
 * [Generative AI:](#generative-ai)
   * [OpenAI](#openai)
@@ -914,6 +840,29 @@ Comparator<Integer> comp = Integer::compareTo;
 - Event-storming sizing - faster
   - --> https://www.lucidchart.com/blog/ddd-event-storming
 
+# Cloud Native Application
+- 12-factor apps
+- Microservices, containers, scalability & elasticity, DevOps, resilient and fault tolerance, cloud native services for messaging, caching, identity
+- Cloud native vs traditional apps: predictable behavior, OS abstraction, right-size & independent, CD, rapid recovery & scalability
+
+## Beyond 12-factor apps
+- 15 factor apps extended by Kevin Hoffman
+  - one codebase, on application
+  - API first: API driven development
+  - dependency management: one central script i.e maven or gradle
+  - design, build immutable artifacts, release immutable unique through semantic versioning i.e 1.4.1, run using specific release
+  - configuration (change without redeployment) and per deployment evn, credentials and code
+  - logs
+  - disposability
+  - backing services i.e plug & play DB, kafka etc
+  - environment parity: try to keep disparity between envs minimal
+  - admin process: keep separate code and microservices for admin processes
+  - port binding: self-contained in its own port using port binding
+  - stateless processes: so that instances could be easily scaled up and down
+  - concurrency: large user base is server concurrently by different instances (horizontal scalability)
+  - telemetry: observability of microservices and log aggregation
+  - Authentication & Authorization
+
 # Clean API Documentation - OpenAPI / Swagger
 - Swagger will be available under this path: http://{server-url}/swagger-ui/index.html 
 - openapi json under /v3/api-docs 
@@ -936,8 +885,8 @@ Comparator<Integer> comp = Integer::compareTo;
 - Each container has own namespaces, control groups
 ![img.png](media/vm-vs-container.png)
 
-# Docker 
-## Build Image
+## Docker 
+### Build Image
 1. Build images using Dockerfile
 
 ``
@@ -948,7 +897,7 @@ docker inspect image <image-id>
 ``
 2. Build images using Buildpacks. This is heavy but supports many advanced features.
 
-By default it uses By default, Spring Boot uses the CNB builders provided by the [Paketo Buildpacks](https://paketo.io/) project.
+By default, Spring Boot uses the CNB builders provided by the [Paketo Buildpacks](https://paketo.io/) project.
 
 [Image build tools comparison](https://buildpacks.io/features/)
 
@@ -976,7 +925,7 @@ It offers consistency, security, performance and governance with the need for Do
 
 - Note: `jib:build` will build and push the image to dockerhub whereas `jib:dockerBuild` will just build the image locally
 
-## Running docker
+### Running docker
 
 ``
 docker run -p 8081:8080 dockerxya/bank-account
@@ -1000,28 +949,11 @@ docker container logs [container-id]
 The dashboard can be used to explore containers, logs as well option to run commands inside the container
 
 
-# Cloud Native Application
-- 12-factor apps
-- Microservices, containers, scalability & elasticity, DevOps, resilient and fault tolerance, cloud native services for messaging, caching, identity
-- Cloud native vs traditional apps: predictable behavior, OS abstraction, right-size & independent, CD, rapid recovery & scalability
+# Docker Compose
+- Liveness --> Readiness. Both are available under /actuator/health.
+- Individually `/actuator/health/liveness`, `/actuator/health/readiness`
+- Network concept: `docker networks ls` and `docker inspect <container-id>`
 
-## Beyond 12-factor apps
-- 15 factor apps extended by Kevin Hoffman
-  - one codebase, on application
-  - API first: API driven development
-  - dependency management: one central script i.e maven or gradle
-  - design, build immutable artifacts, release immutable unique through semantic versioning i.e 1.4.1, run using specific release
-  - configuration (change without redeployment) and per deployment evn, credentials and code
-  - logs
-  - disposability
-  - backing services i.e plug & play DB, kafka etc
-  - environment parity: try to keep disparity between envs minimal
-  - admin process: keep separate code and microservices for admin processes
-  - port binding: self-contained in its own port using port binding
-  - stateless processes: so that instances could be easily scaled up and down
-  - concurrency: large user base is server concurrently by different instances (horizontal scalability)
-  - telemetry: observability of microservices and log aggregation
-  - Authentication & Authorization
 
 # Configuration
 ```
@@ -1106,11 +1038,6 @@ and forward it to the local host in our machine. Just follow the steps shown at 
 
 Summary: Changes pushed to github --> hookdeck endpoint is triggered --> using sandbox, config server (localhost:8071/monitor) is triggered -->
 /monitor publishes config change event to rabbit-mg (spring-cloud-bus) and initiate refresh on all subscribed nodes (dependency added to the nodes) .
-
-# Docker Compose
-- Liveness --> Readiness. Both are available under /actuator/health.
-- Individually `/actuator/health/liveness`, `/actuator/health/readiness`
-- Network concept: `docker networks ls` and `docker inspect <container-id>`
 
 # Database
 In microservices architecture, each service should have its own database.
@@ -1266,7 +1193,7 @@ Create database for microservice and expose in different port in local machine.
 - Create an Aurora global database:
   - Add a new region to the cluster which renders it as global
 # Service Discovery
-- - IPs of new instance is short-lived and changes often
+- IPs of new instance is short-lived and changes often
 - How do microservices locate each other inside a network?
 - How do new service instances enter into the network?
 - How load balancing is done and info between microservices exchanged?
@@ -1291,7 +1218,7 @@ Spring cloud load balancer for client side load balancing
 
 Feign Client for microservice look up
 
-Eureka self preservation mode to avoid traps in the network: 
+Eureka self-preservation mode to avoid traps in the network: 
 ```
 eureka.instance.lease-interval-in-seconds: 30s # heart beat interval
 eureka.instance.lease-expiration-duration-in-seconds: 90s # wait if no heart beat sent and then evict
@@ -2002,24 +1929,6 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
 ## Demo
 - To demo k8s service discovery, we comment out all Eureka related configurations and redploy the services.
 
-# Deploying on public cloud
-- We can deploy our kubernetes microservices onto GCP of google using the free tier.
-- Steps:
-  - Activate free trial
-  - Install google cloud SDK to connect to k8s cluster from local system. [Link](https://cloud.google.com/sdk/docs/install-sdk)
-  - After installing use `gcloud init` to initiate logging into the created account
-  - create k8s cluster after enabling k8s engine API. Switch to standard cluster while creating the cluster
-  - After cluster created, click on three dots menu and click on `connect`. Copy the command and execute in the local terminal
-  - Install k8s discovery server, followed by all the charts created under `helm`
-  - `kubectl describe pod pod-name` and find node name. Find node in k8s dashboard and check logs
-  - Access keycloak using the external IP (deployed as loadbalancer)
-  - Update postman Authorization Access token URL using the keycload IP
-  - Access grafana using port-forwarding (ClusterIP)
-- Shut down
-  - Uninstall all charts
-  - Go to k8s discovery server location and run `kubectl delete -f kubernetes-discoveryserver.yml`
-  - Delete the cluster to avoid any costs
-
 # Kubernetes Ingress, Service mesh (Istio) and mTLS
 - ExternalName is another service type like LB and ClusterIP. Check docs
 - Ingress: Similar to service, we can use ingress to expose our services
@@ -2143,6 +2052,24 @@ spec:
 
 # Microservice code architecture
 ## Port Adapter and Onion Architecture
+
+# Deploying on public cloud
+- We can deploy our kubernetes microservices onto GCP of google using the free tier.
+- Steps:
+  - Activate free trial
+  - Install google cloud SDK to connect to k8s cluster from local system. [Link](https://cloud.google.com/sdk/docs/install-sdk)
+  - After installing use `gcloud init` to initiate logging into the created account
+  - create k8s cluster after enabling k8s engine API. Switch to standard cluster while creating the cluster
+  - After cluster created, click on three dots menu and click on `connect`. Copy the command and execute in the local terminal
+  - Install k8s discovery server, followed by all the charts created under `helm`
+  - `kubectl describe pod pod-name` and find node name. Find node in k8s dashboard and check logs
+  - Access keycloak using the external IP (deployed as loadbalancer)
+  - Update postman Authorization Access token URL using the keycload IP
+  - Access grafana using port-forwarding (ClusterIP)
+- Shut down
+  - Uninstall all charts
+  - Go to k8s discovery server location and run `kubectl delete -f kubernetes-discoveryserver.yml`
+  - Delete the cluster to avoid any costs
 
 
 # JAVA - Security
