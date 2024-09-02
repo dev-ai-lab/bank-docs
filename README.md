@@ -71,11 +71,7 @@
 * [Kubernetes Ingress, Service mesh (Istio) and mTLS](#kubernetes-ingress-service-mesh-istio-and-mtls)
   * [Ingress](#ingress)
   * [Types of traffic:](#types-of-traffic)
-* [Traffic within a cluster between services](#traffic-within-a-cluster-between-services)
-  * [Service mesh:](#service-mesh-)
-  * [Capabilities:](#capabilities)
-  * [Service mesh components](#service-mesh-components)
-  * [Popular service meshes:](#popular-service-meshes)
+  * [Traffic within a cluster between services](#traffic-within-a-cluster-between-services)
 * [Microservice code architecture](#microservice-code-architecture)
   * [Port Adapter and Onion Architecture](#port-adapter-and-onion-architecture)
 
@@ -1984,17 +1980,20 @@ spec:
 ## Types of traffic:
 - Ingress traffic: traffic entering kubernetes cluster
 - Egress traffic: traffic exiting a k8s cluster
-- North-south traffic: traffic entering and exiting a cluster
+- North-bound traffic: Refers to traffic flowing in and out of the Kubernetes cluster to external networks, including: Ingress an Egress
+- South-bound traffic: Refers to internal traffic within the Kubernetes cluster. This includes communication between the pods, services, and nodes inside the cluster.
+- North-south traffic: Traffic entering and exiting a cluster
 
-# Traffic within a cluster between services
+## Traffic within a cluster between services
 - It is called east-west traffic 
-## Service mesh: 
+### Service mesh: 
+- It is an extra layer of software you deploy alongside your cluster (i.e k8s)
 - It is a dedicated infrastructure layer for managing communication between microservices in a containerized environment
 - It provides a set of networking capabilities that facilitate secure, reliable and observable communication between services within a distributed system.
 - Internal traffic (east-west) is guarenteed security by:
   - Being closed to outside world
   - Service mesh
-## Capabilities:
+#### Capabilities:
   - Service discovery
   - Load balancing
   - Circuit breaker
@@ -2006,12 +2005,12 @@ spec:
 
 ![service-mesh.png](media/service-mesh.png)
 
-## Service mesh components
+#### Service mesh components
 1. Data plane: Responsible for routing traffic between services using sidecar proxies
 2. Control plane: Responsible for configuring, managing, and monitoring proxies. It includes components like control plane API, service discovery and configuration management
 ![data-control-plane-istio-sidecar-service-mesh.png](media/data-control-plane-istio-sidecar-service-mesh.png)
 
-### TLS
+#### TLS
 - TLS: transport layer security. Secured transmission of data. Used in browser based exchanges
 - TLS is an encryption protocol
 - Third party issue the certificate which has a validity
@@ -2021,7 +2020,7 @@ spec:
 
 ![TSL-workflow.png](media/TSL-workflow.png)
 
-### mTLS
+#### mTLS
 - When the TLS steps followed by both the parties (service-to-service, within cluster communication). Both should prove their identities.
 - No need of external CA. 
 - Service mesh will act as a certificate authority (CA)
@@ -2031,7 +2030,7 @@ spec:
 
 ![mTLS-workflow.png](media/mTLS-workflow.png)
 
-#### Advantages of mTLS
+##### Advantages of mTLS
 - Mutual Authentication
 - Protection against impersonation
 - Granular access control
@@ -2041,7 +2040,7 @@ spec:
 - Compliance to GDPR, HIPAA, PCI DSS etc
 - Zero Trust Security framework
 
-## Popular service meshes:
+#### Popular service meshes:
 1. Istio
 2. Linkerd
 3. Consul
