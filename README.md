@@ -881,7 +881,16 @@ Comparator<Integer> comp = Integer::compareTo;
 - Each container has own namespaces, control groups
 ![img.png](media/vm-vs-container.png)
 
-## Docker 
+## Docker
+- docker images stored in repositories
+- Dockerhub is the public repository
+- Amazon ECR (Elastic Container Registry)
+  - private repo
+  - public repo  (https://gallery.ecr.aws)
+
+![docker-on-ec2.png](media/docker-on-ec2.png)
+![docker-cycles.png](media/docker-cycles.png)
+- for additional container concepts on AWS, see `aws-architect` docs
 ### Build Image
 1. Build images using Dockerfile
 
@@ -1043,9 +1052,19 @@ docker run -p 3306:3306 --name bank-account-db -e MYSQL_ROOT_PASSWORD=root -e MY
 In order to connect with db, use [SQLECTRON](https://sqlectron.github.io/) and `localhost:3306`.
 Create database for microservice and expose in different port in local machine.
 
-## AWS RDS - Aurora
+## AWS RDS
+- Why RDS instead of own DB:
+  - managed service, continuous backup & restore, monitoring
+  - improved read performance using read replicas
+  - Multi-AZ for DR
+  - Scaling capabilities (H & V)
+- No `SSH` connection is possible to RDS
 - RDS: Supports MySQL, MariaDB, PostgreSQL, Oracle, Ms SQL, and Aurora
-- EBS volume used - auto-scaling
+- EBS volume used - auto-scaling 
+  - when RDS detects you are running out of free DB storage, it scales automatically
+  - you set a max storage threshold too
+  - i.e modify storage if free storage is less than 10% of allocated storage, and low storage lasts less than 4 minutes and 6 hours passed since last modification
+  - available for all types of db engines in RDS
 - Billing based on:
   - Storage Capacity used
   - I/O requests per month
@@ -1053,6 +1072,58 @@ Create database for microservice and expose in different port in local machine.
   - Data Transfers
 - On-demand instances (Pay-as-you-go)
 - VPC concept
+
+### Read Replicas (DB Performance)
+- Improves performance and readability
+- Async replicas
+- Up to 15 replicas:
+  - Within AZ, cross AZ, or cross region.
+  - Read client in a different region can use that region's read replica
+  - replication is `async`, so reads are eventually consistent
+  - read replicas can be promoted to their own DB
+  - To leverage read replicas, `applicaiton` must be updated
+  - Use case: in a one instance DB, we want to add reporting and analytics on top of normal application activities -->
+    - We create a `read replica` (select SQLs)
+    - production application is unaffected
+  - Write on the master
+- Read replica can be promoted to master
+- A read replica can have master and standby as in normal case
+- Read replicas and sharding (i.e halving the DB). Master with Read replica. Read replica then promoted to master and replication link broken
+- Hands-on: DB --> Actions --> Add reader (choose a region, multi-az?, ): snapshot is taken from master instance
+
+![aws-rds-read-replica.png](media/aws-rds-read-replica.png)
+
+![VPC-AWS-RDS.png](media/VPC-RDS-setup.png)
+
+#### Network Cost and Read Replicas
+- Traffic between AZs incur additional costs
+- However, for RDS read replicas within the same region, you don't pay that fee.
+- i.e `Master (M)` in `us-east-1a` replicates the data to `read replica (R)` in `us-east-1b` without cross AZ costs.
+- Cross-region will incur costs (replication fee)
+
+### Multi-AZ in RDS (Disaster Recovery & availability)
+- SYNC replication
+- Failover if:
+  - AZ is lost
+  - network issue
+  - instance or storage failure
+- No manual intervention in app (automatic)
+- Note: A read replica can be setup as multi-AZ for DR
+- Going from Single-AZ to Multi-AZ
+  - zero downtime, just modify
+  - an standby will be brought up
+    - a snapshot is taken
+    - a new DB is restored from snapshot in the new AZ
+    - synchronization is established between the two DBs
+
+![multi-az-dr-availability.png](media/multi-az-dr-availability.png)
+
+- Primary goal is improving availability and no performance benefits
+- Data sync between master and standby each 5 minutes
+- Failover in 1 to 2 minutes
+- Upgrade: first on standby, reroute traffic to standby and so on
+- Backups can be taken from standby to avoid impacts
+
 ### Resource creation
 - VPC creation:
   - Go to AWS, search VPC and create one
@@ -1072,20 +1143,6 @@ Create database for microservice and expose in different port in local machine.
   5. Choose subnet group created in `2.`
   6. Create security group. It a place with port to access RDS instances. It is created under VPC
 
-### Backups
-- RDS automated backup (takes snapshot)
-- RDS snapshots (manual)
-- Under `Maintenance and Backups` one can find restore option and manual snapshot
-- Snapshots can be copied and shared: in `Actions`. However, an automated backup can't be shared. It can only be copied
-  - can be copied to another region.
-  - with this method, a DB can be moved to another region (from frankfurt to london). In london, go to RDS->snapshots
-  - Can be shared with another aws account (using account id). Go to that account: RDS->snapshots->shared with me
-    - The snapshot is encrypted. The other account should have access to ecryption in order to restore the DB
-### RDS Security Groups
-- RDS shouldn't be accessible to the internet (should reside in private subnet)
-- Security group (stateful firewall)
-- In addition to security group, one can configure network ACL (not stateful firewall)
-
 ### RDS and IAM
 - Users, groups, roles, policies
 - Authenticate with IAM:
@@ -1104,60 +1161,100 @@ Create database for microservice and expose in different port in local machine.
   - One can edit the PG and add new values for any parameters listed.
 ### Option group
 
-### RDS Proxy
-- It manages incoming connections to prevent the db from being overwhelmed
-- Improves db scalability when many users
-- Enhance Security by being in-between
-- Caching for common queries - improved performance by 
-- So it is basically a loadbalancer thing
-- Can be integrated with IAM and AWS secret manager
+### RDS Demos
+- Configuration
 
-### Multi-AZ RDS
-- Think of it as a set of data centers
-  - Primary (Master) instance in one zone 
-  - Standby in another zone
-- Primary goal is improving availability and no performance benefits
-- Data sync between master and standby each 5 minutes
-- Failover in 1 to 2 minutes
-- Upgrade: first on standby, reroute traffic to standby and so on
-- Backups can be taken from standby to avoid impacts
-- We can convert an instance into multi-az
+![rds-postgres-config.gif](media/rds-postgres-config.gif)
 
-### Read Replicas
-- Improves performance and readability
-- Async replicas
-- Up to 5 copies (cross AZ and cross region). Read client in a different region can use that region's read replica
-  - Read on a replica
-  - Write on the master
-- Read replica can be promoted to master
-- A read replica can have master and standby as in normal case
-- Read replicas and sharding (i.e halving the DB). Master with Read replica. Read replica then promoted to master and replication link broken
-- Hands-on: DB --> Actions --> Add reader (choose a region, multi-az?, ): snapshot is taken from master instance
-![VPC-AWS-RDS.png](media/VPC-AWS-RDS.png)
+- Connection to the DB
+
+![rds-postgres-connection.gif](media/rds-postgres-connection.gif)
+
+- Additional features
+
+![rds-additional-features.gif](media/rds-additional-features.gif)
+
+### RDS vs RDS custom
+- RDS automates setup, operation, and scaling of database in AWS
+- RDS custom gives access to the underlying database and OS (configure, install patches etc) as well as access to underlying EC2 instance using SSH
+  - available only for Oracle & SQL server database
+  - deactivate `automation mode` when customizing and better to take snapshots
+
+### RDS Backups
+- Automated Backup:
+  - RDS automated backup (takes snapshot)
+  - Daily full backup (during backup window time)
+  - Transaction logs backed up by RDS every 5 minutes
+    - so you can restore to any point in time (till 5 minutes ago)
+  - 1 to 30 days of retention period, set to 0 to disable automated backup
+- RDS snapshots (manual or on demand backup)
+  - manually triggered by the user
+  - retention for as long as you want
+  - Hint: stopped RDS database will still incur costs for storage. Better make snapshot, then delete it and later if needed restore again.
+    - snapshots costs way less than the actual storage
+  - restore:
+    - MySQL RDS: create backup of the on-premise DB, store in S3, then restore onto a new RDS (MySQL)
+    - Aurora MySQL: create backup using Percona XtraBackup, store the backup file onto S3, restore onto a new Aurora instance 
+- Under `Maintenance and Backups` one can find restore option and manual snapshot
+- Snapshots can be copied and shared: in `Actions`. However, an automated backup can't be shared. It can only be copied
+  - can be copied to another region.
+  - with this method, a DB can be moved to another region (from frankfurt to london). In london, go to RDS->snapshots
+  - Can be shared with another aws account (using account id). Go to that account: RDS->snapshots->shared with me
+    - The snapshot is encrypted. The other account should have access to ecryption in order to restore the DB
 
 ### Aurora DB
-- 3 times the performance of postgres and 5 time the performance of mysql
-- Support upto 15 read replicas that supports auto-scaling
-- Cluster (write) endpoints
+- It proprietary tech from AWS
+- MySQL & Postgres compatible:
+  - meaning the driver will work as if Aurora was a Postgres or MySQL database
+- 3x the performance of postgres and 5x the performance of mysql
+- Support upto 15 read replicas along with writer(master node) that supports auto-scaling (very fast sub 10 minutes). It has cluster (write) endpoints.
+  - read replicas support cross region replication
+- Failover:
+  - It is instantaneous
+  - Any read replica can be become the master in case the master fails
+
+- Aurora High Availability:
+  - 6 copies of your data across 3 AZ
+    - 4 copies out of 6 needed for writes (so if one AZ is down, that is fine)
+    - 3 copies out of 6 needed for replicas ()
+    - self-healing with peer-to-peer replication (if some data is corrupted, it will be healed)
+    - storage is stripped across 100s of volumes
+  - Automated failover for master in less than 30 seconds
+  - Only one Aurora instance takes writes (master)
+
+![aurora-availability-scaling.png](media/aurora-availability-scaling.png)
+  - Read replicas can have auto-scaling. How the apps can keep track of the read replicas then? Using read endpoint (DNS name)
+
+![aurora-db-w-r-endpoint.png](media/aurora-db-w-r-endpoint.png)
 - Aurora Storage:
+  - Storage scaling in increment of 10GB, upto 128 TB
   - Aurora I/O-Optimized:
     - For i/o intensive use cases
     - But more expensive per GB
     - Not paying for read and writes
   - Aurora Standard
     - Cheaper per GB
+- Aurora Backup:
+  - DB can be restored to any point in time (back and fort)
+  - Automated Backup:
+    - 1 to 35 days (can't be disabled)
+  - Manual snapshots:
+    - same as RDS manual backup
+- Aurora Cloning:
+  - Create a new one from existing one which faster than snapshot & restore. It is cost-effective.
+  - uses `copy-on-write` protocol: read: uses same data volume as original DB, when write: additional storage allocated and copy made
+  - use case: prod --> staging (cloned)
 - Cache Scenario
-  - Write through cache
-  - A complex query is come again, is already stored
-- Aurora High Availability:
+  - Write through cache (see DB Cache in ElastiCache)
+  - A complex query is coming again, is already stored
 - Aurora Global Databases
-  - Acorss multiple regions
+  - Across multiple regions
   - Upto 5 secondary regions
   - If one region fails it fail over to another region
 - Aurora Serverless:
   - Scaling provisioned cluster can be challenging
   - Aurora serverless scales automatically (By automatically adjusting DB CPU, memory, network capacity)
-    - Elastic scaling
+    - Elastic scaling (they all come up and go down when not used)
   - One can add a serverless cluster on top of provisioned cluster. i.e Writer is provisioned while readers are serverless and vise versa
 - Aurora Instance Class:
   - Provisioned
@@ -1169,7 +1266,8 @@ Create database for microservice and expose in different port in local machine.
       - Memory optimized
   - prices are determined based on those classes
   - decide based on use cases in hand
-
+- Aurora costs:
+  - 20 % more costs, but more efficient
 #### Aurora DB creation:
 - Enable global database flag
 - One can configure EC2 instance to connect to the DB
@@ -1183,11 +1281,218 @@ Create database for microservice and expose in different port in local machine.
 - Add a serverless reader:
   - Add reader --> Serverless v2 --> ACU (Aurora Capacity Unity)
   - No matter how many readers, the endpoint is one and the same
-  - Any reader with high failover priority will overtake a failing primary writer
+  - Any reader with high fail over priority will overtake a failing primary writer
 - Create a serverless Aurora cluster
   - Create RDS and choose serverless v2 class
 - Create an Aurora global database:
   - Add a new region to the cluster which renders it as global
+
+![aurora-db.png](media/aurora-db.png)
+
+#### Aurora DB Demo
+- Aurora Setup Demo
+
+![aurora-db-setup.gif](media/aurora-db-setup.gif)
+
+- Aurora DB Interaction Demo
+
+![aurora-db-interaction.gif](media/aurora-db-interaction.gif)
+
+#### Aurora Advanced Concepts
+- Auto-scaling automatic
+
+![aurora-auto-scaling-endpoints.png](media/aurora-auto-scaling-endpoints.png)
+
+- Aurora Custom Endpoints
+
+![aurora-custom-endpoints.png](media/aurora-custom-endpoints.png)
+
+- Aurora Serverless
+  - Autoscaling based on the usage only 
+  - good for infrequent, intermittent, unpredictable workloads
+  - No capacity planning and pay per second and can be more cost-effective
+
+![aurora-serverless.png](media/aurora-serverless.png)
+
+- Global Aurora
+  - Aurora cross-region read replicas
+  - Aurora Global DB (recommended)
+    - 1 primary region (read/write)
+    - upto 5 secondary (read-only) regions, replication lag is less than 1 second
+    - upto 16 read replicas per secondary region
+    - if a DB in a region fails, another region can be promoted in less than 1 minute
+    - cross-region replication takes less than `1 second
+
+![aurora-global.png](media/aurora-global.png)
+
+- Aurora ML Integration
+  - Add ML based prediction to the application
+  - SageMaker
+  - Amazon Comprehend
+  - Use cases:
+    - fraud detection, ads targeting, sentiment analysis, product recommendation
+
+![aurora-ml-integration.png](media/aurora-ml-integration.png)
+
+### RDS & Aurora Security and Proxy
+- At-rest encryption:
+  - master and replicas encryption using AWS KMS - defined as launch time
+- RDS shouldn't be accessible to the internet (should reside in private subnet)
+- Security group (stateful firewall)
+  - block specific IPs, ports, or SGs
+- encryption:
+  - if master not encrypted, replica can't be encrypted
+  - to encrypt un-encrypted DB, create snapshot, copy it with ticked "enable encryption", and restore the RDS instance from encrypted snapshot
+  - in-flight encryption TLS-read by default, use AWS TLS root cert
+- In addition to security group, one can configure network ACL (not stateful firewall)
+- IAM role to connection and authenticate like user/pass
+- Audit logs can be enabled and sent to CloudWatch for longer retention
+
+- RDS Proxy
+  - It manages incoming connections to prevent the db from being overwhelmed (stressed on CPU, RAM)
+  - it is fully managed, serverless, autoscaling, highly available (multi-az)
+  - It minimizes open connections (timeouts) and pools connections to the RDS
+    - it allows apps to pool and share connections
+  - It reduces RDS & Aurora failover time by upto 66%
+  - supports MySQL, Postgres, MariaDB, MS SQL, and Aurora (MySQL, Postgres)
+  - It is never publicly accessible (must be accessed from VPC)
+  - Improves db scalability when many users
+  - Caching for common queries - improved performance by
+  - So it is basically a loadbalancer thing
+  - Can be integrated with IAM and AWS secret manager
+  - Use case: a crucial use case is when 1000s of lambda functions coming up & going down want to access the DB
+
+![aws-rds-proxy.png](media/aws-rds-proxy.png)
+
+### AWS ElastiCache
+- like RDS, it is a managed Redis, Memcached 
+- they are in-memory DBs with high performance, low latency
+- reduces loadd off of DBs for read intensive workloads (common queries results are cached)
+- the cache makes the applications stateless
+- for integration, it involves heavy application code change
+- Redis:
+  - multi-AZ with auto-failover, high availability
+  - read replicas and replication
+  - IAM authentication
+  - Redis AUTH (passowrd/token)
+  - AOF for data durability, backup, restore, supports sets and sorted sets
+  - Use case: an important use case is leaderboards in games (computationally complex) for ranking gamers in real time using 
+    - sorted sets which guarantees uniqueness and ordering
+- Memcached:
+  - multi-node and partitioning of data (sharding)
+  - no high-availability (replication)
+  - supports SASL based authentication
+  - non-persistent
+  - back & restore only in serverless one
+  - multi-threaded architecture
+- Patterns for loading data into ElastiCache
+  - lazy loading: all data cached, stale
+  - write through: add or update the data in the cache when written to the DB, no stale data
+  - session store: store temporary session data in a cache (using TTL feature)
+  - 
+- DB cache hit/miss:
+
+![db-cache-hit-miss.png](media/db-cache-hit-miss.png)
+
+- User Session Store - Stateless application
+
+![user-session-store.png](media/user-session-store.png)
+
+- Demos
+
+![elasticache-redis-demo.gif](media/elasticache-redis-demo.gif)
+
+## AWS No SQL 
+### DynamoDB - NoSQL
+- **Fully managed & available:** 
+  - NoSQL database with multi-AZ replication and integrated IAM security.
+- **High scalability & performance:** 
+  - Supports millions of requests/sec, trillions of rows, hundreds of TB storage, and single-digit millisecond latencies.
+- **Flexible schema:** 
+  - Uses tables with primary keys, supports evolving attributes and various data types (scalar, document, set) with a 400KB item limit.
+  - items has attributes (& new ones can be added anytime unlike RDS)
+- **Cost-efficient & maintenance-free:** 
+  - Offers auto-scaling and requires no patching (DB is already there).
+- **Capacity options:** 
+  - Provisioned (pre-planned RCUs/WCUs with auto-scaling) and On-Demand (automatic scaling for variable workloads).
+- Standard & Infrequent Access (IA) Table Class
+- If schema changes rapidly, then DynamoDB is the choice
+
+![img.png](media/dynamodb-table.png)
+
+- Demos:
+
+![dynamodb-create-table.gif](media/dynamodb-create-table.gif)
+- **DAX caching:**
+  - Provides an in-memory cache for reduced read latency (microseconds) with a default 5-minute TTL.
+  - helps solve read congestion
+  - fully compatible with DynamoDB API (not app code change).
+
+![dynamodb-acc-dax.png](media/dynamodb-acc-dax.png)
+  - Why not ElastiCache
+    - both can be complementary
+    - in ElastiCache one can store huge aggregated result
+
+![dynamodb-dax-elasticache.png](media/dynamodb-dax-elasticache.png)
+- DynamoDB - Stream Processing
+  - ordered stream of item-level modification(create, update, delete)
+  - use cases:
+    - react in real time (welcome emails to users)
+    - real-time usage analytics
+    - insert into derivative tables
+    - implement cross-region replication
+    - invoke lambda on changes
+  - Two stream processing types on DynamoDB:
+    - DynamoDB streams
+      - 24 hours retention
+      - limited # consumers
+      - process using lambda triggers or dynamodb stream kinesis adapters
+    - Kinesis Data Stream (new): send all streams to it
+      - 1 year retention
+      - high # consumers
+      - process using lambda, kinesis data analytics, Kinesis Data Firehose, Glue, Streaming ETL
+
+![drafted-dynamodb-stream.png](media/drafted-dynamodb-stream.png)
+
+- DynamoDB Global Tables
+  - Make a DynamoDB table accessible with low latency in multiple-regions
+  - Active-Active replication (2-ways)
+  - Applications can READ and WRITE to the table in any region
+  - Must enable DynamoDB Streams as a pre-requisite
+
+![dynamodb-global-table.png](media/dynamodb-global-table.png)
+
+- DynamoDB TTL
+  - automatically delete an item after an expiry timestamp 
+  - Use cases: reduce stored data by keeping only current items, adhere to regulatory obligations, web session handling...
+
+![img.png](media/dynamodb-ttl.png)
+
+- DynamoDB - backups for DR
+  - **Continuous Backups using point-in-time recovery (PITR)**
+    - Can be enabled for up to 35 days
+    - Allows recovery to any point within the backup window
+    - Restores data by creating a new table
+  - **On-Demand Backups**
+    - Full backups retained until explicitly deleted
+    - No impact on performance or latency
+    - Can be managed in AWS Backup (supports cross-region copies & life cycle options)
+    - Restores data by creating a new table
+
+- DynamoDB - Integration with S3
+  - Export table to S3 (Requires PITR) & query using retina on S3
+    - Supports export for any point in the last 35 days
+    - No impact on table read capacity
+    - Enables data analysis and auditing
+    - Supports ETL before re-importing to DynamoDB
+    - Exports in DynamoDB JSON or ION format
+  - Import from S3
+    - Supports CSV, DynamoDB JSON, or ION formats
+    - Doesn’t consume write capacity
+    - Creates a new table
+    - Logs import errors in CloudWatch Logs
+
+![img.png](media/drafted-dynamodb-s3-int.png)
 # Service Discovery
 - IPs of new instance is short-lived and changes often
 - How do microservices locate each other inside a network?
@@ -1283,6 +1588,10 @@ Finally GW service starts.
 - API analytics:
   - Exposing API, enable other to consume your API, and visibility (API analytics)
   - API analytics: usage, error rates, geographic distribution etc
+
+## AWS API Management 
+- see `aws solution architect` repo
+
 # Resiliency in microservices
 - To avoid problem cascading if one service is failing
 ## Resiliency in Spring Cloud Gateway
@@ -1866,7 +2175,7 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
 ## Kubernetes Service Types
 1. ClusterIP: ClusterIP service creates an internal IP address for use within the K8s cluster. Good for internal-only applications that support other workloads within the cluster. eazy bytes
 ![ClusterIP](media/cluster-ip-service-type.png)
-2. NodePort: Services of type NodePort build on top of ClusterIP type services by exposing the ClusterIP service outside of the cluster on high ports (default 30000-32767). If no port number is specified then Kubernetes automatically selects afree port. The local kube-proxy is responsible for listening to the port on the node and forwarding client traffic on the NodePort to the ClusterIP.
+2. NodePort: Services of type NodePort build on top of ClusterIP type services by exposing the ClusterIP service outside of the cluster on high ports (default 30000-32767). If no port number is specified then Kubernetes automatically selects a free port. The local kube-proxy is responsible for listening to the port on the node and forwarding client traffic on the NodePort to the ClusterIP.
 ![NodePort](media/node-port-service-type.png)
    - IP address of the cluster worker node is needed. If the worker node goes down, it won't work
 3. LoadBalancer: The LoadBalancer service type is built on top of NodePort service types by provisioning and configuring external load balancers from public and private cloud providers. It exposes services that are running in the cluster by forwarding layer 4 traffic to worker nodes. This is a dynamic way of implementing a case that involves external load balancers and NodePort type services.
@@ -1923,7 +2232,19 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
 - To setup this [server](https://docs.spring.io/spring-cloud-kubernetes/reference/spring-cloud-kubernetes-discoveryserver.html)
 
 ## Demo
-- To demo k8s service discovery, we comment out all Eureka related configurations and redploy the services.
+- To demo k8s service discovery, we comment out all Eureka related configurations and redeploy the services.
+## A comparison of load balancers:
+1. Spring Cloud Load Balancer:
+- Ideal for small-scale, Spring-based microservices applications.
+- Provides fine-grained, application-level control over request routing.
+
+2. Kubernetes LoadBalancer Service:
+- Best for managing external traffic into Kubernetes clusters.
+- Works within Kubernetes environments with Pod scaling and cloud integrations.
+
+3. AWS Elastic Load Balancer:
+A robust, scalable, and fully-managed service for balancing external and internal traffic across AWS workloads.
+Designed for enterprise-grade applications requiring multi-region, highly available, and secure load balancing.
 
 # Kubernetes Ingress, Service mesh (Istio) and mTLS
 - ExternalName is another service type like LB and ClusterIP. Check docs
