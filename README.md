@@ -1367,14 +1367,14 @@ Create database for microservice and expose in different port in local machine.
 ### AWS ElastiCache
 - like RDS, it is a managed Redis, Memcached 
 - they are in-memory DBs with high performance, low latency
-- reduces loadd off of DBs for read intensive workloads (common queries results are cached)
+- reduces load off of DBs for read intensive workloads (common queries results are cached)
 - the cache makes the applications stateless
 - for integration, it involves heavy application code change
 - Redis:
   - multi-AZ with auto-failover, high availability
   - read replicas and replication
   - IAM authentication
-  - Redis AUTH (passowrd/token)
+  - Redis AUTH (password/token)
   - AOF for data durability, backup, restore, supports sets and sorted sets
   - Use case: an important use case is leaderboards in games (computationally complex) for ranking gamers in real time using 
     - sorted sets which guarantees uniqueness and ordering
