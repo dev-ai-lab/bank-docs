@@ -32,7 +32,7 @@
   * [Spring Cloud Config Server](#spring-cloud-config-server)
   * [Change config at runtime](#change-config-at-runtime)
 * [Database](#database)
-  * [AWS RDS - Aurora](#aws-rds---aurora)
+  * [AWS RDS](#aws-rds)
 * [Service Discovery](#service-discovery)
 * [Routing, Cross cutting concern in microservices](#routing-cross-cutting-concern-in-microservices)
   * [Spring Cloud Gateway](#spring-cloud-gateway)
@@ -1211,6 +1211,8 @@ Create database for microservice and expose in different port in local machine.
   - read replicas support cross region replication
 - Failover:
   - It is instantaneous
+  - read replicas are assigned priority (0-15)
+  - in the event of failure, aws promotes the highest priority replica (smaller number), if two of the same priority, it will pick up the largest one.
   - Any read replica can be become the master in case the master fails
 
 - Aurora High Availability:
@@ -1365,7 +1367,8 @@ Create database for microservice and expose in different port in local machine.
 ![aws-rds-proxy.png](media/aws-rds-proxy.png)
 
 ### AWS ElastiCache
-- like RDS, it is a managed Redis, Memcached 
+- like RDS, it is a managed Redis, Memcached
+- HIPAA (health) compliant
 - they are in-memory DBs with high performance, low latency
 - reduces load off of DBs for read intensive workloads (common queries results are cached)
 - the cache makes the applications stateless
