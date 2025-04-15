@@ -1366,7 +1366,8 @@ Create database for microservice and expose in different port in local machine.
 
 ![aws-rds-proxy.png](media/aws-rds-proxy.png)
 
-### AWS ElastiCache
+For clear distinction between Aurora and RDS see this [readme](database.md)
+## AWS ElastiCache
 - like RDS, it is a managed Redis, Memcached
 - HIPAA (health) compliant
 - they are in-memory DBs with high performance, low latency
