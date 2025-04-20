@@ -19,6 +19,14 @@
   * [Imperative](#imperative)
   * [Declarative:](#declarative)
   * [Modern Java Features](#modern-java-features)
+    * [Functional Interface](#functional-interface)
+    * [Constructor and Method References](#constructor-and-method-references)
+    * [Lambdas](#lambdas)
+    * [Streaming API](#streaming-api)
+    * [Optionals](#optionals)
+    * [Concurrency and Immutability](#concurrency-and-immutability)
+    * [Default and Static methods:](#default-and-static-methods)
+    * [New Date and Time API (java.time)](#new-date-and-time-api-javatime)
 * [Domain Driven Design (DDD)](#domain-driven-design-ddd)
   * [Identify domain context and service boundaries](#identify-domain-context-and-service-boundaries)
 * [Cloud Native Application](#cloud-native-application)
@@ -26,66 +34,114 @@
 * [Clean API Documentation - OpenAPI / Swagger](#clean-api-documentation---openapi--swagger)
   * [Decoration of API using annotations](#decoration-of-api-using-annotations)
 * [Deployment, Portability, and Scalability](#deployment-portability-and-scalability)
-  * [Docker](#docker-)
-  * [Docker Compose](#docker-compose)
+  * [Docker](#docker)
+    * [Build Image](#build-image)
+    * [Running docker](#running-docker)
+  * [Docker Dashboard](#docker-dashboard)
+* [Docker Compose](#docker-compose)
 * [Configuration](#configuration)
   * [Spring Cloud Config Server](#spring-cloud-config-server)
+    * [Check properties](#check-properties)
+    * [Profiles](#profiles)
+    * [Encryption](#encryption)
   * [Change config at runtime](#change-config-at-runtime)
+    * [Spring cloud bus](#spring-cloud-bus)
+    * [Using webhook to avoid manual work](#using-webhook-to-avoid-manual-work)
 * [Database](#database)
   * [AWS RDS](#aws-rds)
+    * [Read Replicas (DB Performance)](#read-replicas-db-performance)
+    * [Multi-AZ in RDS (Disaster Recovery & availability)](#multi-az-in-rds-disaster-recovery--availability)
+    * [Resource creation](#resource-creation)
+    * [RDS and IAM](#rds-and-iam)
+    * [RDS Parameter Groups](#rds-parameter-groups)
+    * [Option group](#option-group)
+    * [RDS Demos](#rds-demos)
+    * [RDS vs RDS custom](#rds-vs-rds-custom)
+    * [RDS Backups](#rds-backups)
+    * [Aurora DB](#aurora-db)
+    * [RDS & Aurora Security and Proxy](#rds--aurora-security-and-proxy)
+  * [AWS ElastiCache](#aws-elasticache)
+  * [AWS No SQL](#aws-no-sql-)
+    * [DynamoDB - NoSQL](#dynamodb---nosql)
 * [Service Discovery](#service-discovery)
 * [Routing, Cross cutting concern in microservices](#routing-cross-cutting-concern-in-microservices)
   * [Spring Cloud Gateway](#spring-cloud-gateway)
   * [Apigee - API management](#apigee---api-management)
+  * [AWS API Management](#aws-api-management-)
 * [Resiliency in microservices](#resiliency-in-microservices)
   * [Resiliency in Spring Cloud Gateway](#resiliency-in-spring-cloud-gateway)
+    * [Fallback for circuit breaker](#fallback-for-circuit-breaker)
   * [Circuit breaker using Feign Client in Account microservices](#circuit-breaker-using-feign-client-in-account-microservices)
   * [Http timeout config:](#http-timeout-config-)
   * [Retry Pattern with Backoff Strategy](#retry-pattern-with-backoff-strategy)
   * [Rate Limiter Pattern](#rate-limiter-pattern)
+    * [Rate Limiter in spring gateway](#rate-limiter-in-spring-gateway)
+    * [Ratelimiter inside individual microservice](#ratelimiter-inside-individual-microservice)
   * [Bulkhead patterns](#bulkhead-patterns)
   * [Aspect Order](#aspect-order)
 * [Observability and Monitoring](#observability-and-monitoring)
   * [Log, metrics, traces](#log-metrics-traces)
   * [Prometheus and micrometer Demo](#prometheus-and-micrometer-demo)
+    * [Alerting in Grafana](#alerting-in-grafana)
 * [Distributed Tracing](#distributed-tracing)
 * [Securing microservices:](#securing-microservices)
   * [Why OAuth2 (Open Authorization)](#why-oauth2-open-authorization)
   * [OpenID Connect](#openid-connect)
+    * [Implementations](#implementations)
   * [Flow](#flow)
-  * [Demo](#demo-2)
+    * [Grant Type Flow](#grant-type-flow)
+  * [Demo](#demo)
   * [Making Gateway server as Resource server](#making-gateway-server-as-resource-server)
+    * [Authentication](#authentication)
+    * [Authorization using Roles](#authorization-using-roles)
   * [Authorization code grant type flow](#authorization-code-grant-type-flow)
 * [Event driven microservices](#event-driven-microservices)
   * [Pub/Sub using RabbitMQ](#pubsub-using-rabbitmq)
+    * [Spring Cloud Functions features:](#spring-cloud-functions-features)
+    * [Spring cloud streams](#spring-cloud-streams)
+    * [Spring cloud function for messaging microservice](#spring-cloud-function-for-messaging-microservice)
   * [Using Kafka](#using-kafka)
-
+    * [Kafka vs RabbitMQ](#kafka-vs-rabbitmq)
+    * [Key concepts](#key-concepts)
+    * [Key knowledge points:](#key-knowledge-points)
+    * [Setup](#setup)
 * [Orchestration - Kubernetes](#orchestration---kubernetes)
   * [Key concepts](#key-concepts-1)
   * [Setup](#setup-1)
   * [Kubernetes Yaml Config](#kubernetes-yaml-config)
+    * [Scaling up and down](#scaling-up-and-down)
   * [Kubernetes Service Types](#kubernetes-service-types)
   * [Why helm](#why-helm)
+    * [Installing Helm](#installing-helm)
+    * [Additional helm commands](#additional-helm-commands)
+    * [Helm Structure](#helm-structure)
+    * [Helm chart for our Microservices](#helm-chart-for-our-microservices)
+    * [Upgrade chart - Roll in and Roll out](#upgrade-chart---roll-in-and-roll-out)
 * [Server side load balancing](#server-side-load-balancing)
-  * [Demo](#demo-3)
+  * [Demo](#demo-1)
+  * [A comparison of load balancers:](#a-comparison-of-load-balancers)
 * [Kubernetes Ingress, Service mesh (Istio) and mTLS](#kubernetes-ingress-service-mesh-istio-and-mtls)
   * [Ingress](#ingress)
   * [Types of traffic:](#types-of-traffic)
   * [Traffic within a cluster between services](#traffic-within-a-cluster-between-services)
+    * [Service mesh:](#service-mesh-)
 * [Microservice code architecture](#microservice-code-architecture)
   * [Port Adapter and Onion Architecture](#port-adapter-and-onion-architecture)
-
 * [Deploying on public cloud](#deploying-on-public-cloud)
-
 * [JAVA - Security](#java---security)
   * [Security Libraries:](#security-libraries)
   * [Code Injection Prevention:](#code-injection-prevention)
+    * [SQL injection](#sql-injection)
+    * [Encoding Reserved Control Sequences](#encoding-reserved-control-sequences)
+    * [XML Parser Defense](#xml-parser-defense)
+    * [JAAS](#jaas)
   * [Cryptography](#cryptography)
   * [Secure Communication](#secure-communication)
   * [Public key Infrastructure (PKI)](#public-key-infrastructure-pki)
   * [Web Security](#web-security)
 * [Spring Framework](#spring-framework)
   * [Spring Web](#spring-web)
+    * [Spring Web Security](#spring-web-security)
   * [Spring Testing Ecosystem](#spring-testing-ecosystem)
   * [Spring Data (JPA)](#spring-data-jpa-)
 * [SQL Codebook](#sql-codebook)
@@ -93,13 +149,25 @@
   * [Cheat sheet](#cheat-sheet)
   * [GROUP BY and Aggregate functions](#group-by-and-aggregate-functions)
   * [JOINS](#joins)
+    * [INNER JOIN will result with the set of records that match in both tables - Intersection of both](#inner-join-will-result-with-the-set-of-records-that-match-in-both-tables---intersection-of-both)
+    * [Outer Joins](#outer-joins)
+    * [UNION](#union)
   * [Advanced SQL commands](#advanced-sql-commands)
+    * [Mathematical Functions and Operators](#mathematical-functions-and-operators)
+    * [String functions and operators](#string-functions-and-operators)
+    * [Subquery](#subquery)
+    * [Self-Join](#self-join)
+    * [PgAdmin](#pgadmin)
   * [Additional Examples](#additional-examples)
   * [Creating databases and tables](#creating-databases-and-tables)
+    * [Data types:](#data-types-)
+    * [Constraints:](#constraints)
   * [Conditional expression and procedures](#conditional-expression-and-procedures)
   * [VIEWS](#views)
   * [Import and Export in pgAdmin](#import-and-export-in-pgadmin)
   * [EXTRA: Postgres with Python](#extra-postgres-with-python)
+    * [Python Basics](#python-basics)
+    * [Python Setup](#python-setup)
 * [BPMN with Camunda](#bpmn-with-camunda)
 * [Generative AI:](#generative-ai)
   * [OpenAI](#openai)
@@ -1023,7 +1091,7 @@ docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.12-ma
 ```
 3. Add related configurations to the YAML if different from the default.
 
-#### Demo
+**Demo**
 1. Change the values in the repo and config server picks it up
 2. Invoke the bus endpoint on the microservices
    - POST /actuator/busrefresh 
@@ -1043,6 +1111,8 @@ and forward it to the local host in our machine. Just follow the steps shown at 
 
 Summary: Changes pushed to github --> hookdeck endpoint is triggered --> using sandbox, config server (localhost:8071/monitor) is triggered -->
 /monitor publishes config change event to rabbit-mg (spring-cloud-bus) and initiate refresh on all subscribed nodes (dependency added to the nodes) .
+
+---
 
 # Database
 In microservices architecture, each service should have its own database.
@@ -1095,19 +1165,20 @@ Create database for microservice and expose in different port in local machine.
 
 ![VPC-AWS-RDS.png](media/VPC-RDS-setup.png)
 
-#### Network Cost and Read Replicas
+**Network Cost and Read Replicas**
 - Traffic between AZs incur additional costs
 - However, for RDS read replicas within the same region, you don't pay that fee.
 - i.e `Master (M)` in `us-east-1a` replicates the data to `read replica (R)` in `us-east-1b` without cross AZ costs.
 - Cross-region will incur costs (replication fee)
 
 ### Multi-AZ in RDS (Disaster Recovery & availability)
-- SYNC replication
+- SYNC replication from primary to secondary
 - Failover if:
   - AZ is lost
   - network issue
   - instance or storage failure
 - No manual intervention in app (automatic)
+  - AWS RDS simply flips the CNAME for the DB to point to the standby, which in turm promoted to become primary
 - Note: A read replica can be setup as multi-AZ for DR
 - Going from Single-AZ to Multi-AZ
   - zero downtime, just modify
@@ -1270,7 +1341,7 @@ Create database for microservice and expose in different port in local machine.
   - decide based on use cases in hand
 - Aurora costs:
   - 20 % more costs, but more efficient
-#### Aurora DB creation:
+**Aurora DB creation:**
 - Enable global database flag
 - One can configure EC2 instance to connect to the DB
 - Security group selection
@@ -1291,7 +1362,7 @@ Create database for microservice and expose in different port in local machine.
 
 ![aurora-db.png](media/aurora-db.png)
 
-#### Aurora DB Demo
+**Aurora DB Demo**
 - Aurora Setup Demo
 
 ![aurora-db-setup.gif](media/aurora-db-setup.gif)
@@ -1300,7 +1371,7 @@ Create database for microservice and expose in different port in local machine.
 
 ![aurora-db-interaction.gif](media/aurora-db-interaction.gif)
 
-#### Aurora Advanced Concepts
+**Aurora Advanced Concepts**
 - Auto-scaling automatic
 
 ![aurora-auto-scaling-endpoints.png](media/aurora-auto-scaling-endpoints.png)
@@ -1374,9 +1445,24 @@ For clear distinction between Aurora and RDS see this [readme](database.md)
 - reduces load off of DBs for read intensive workloads (common queries results are cached)
 - the cache makes the applications stateless
 - for integration, it involves heavy application code change
-- Redis:
+- Redis (Remote dictionary server):
+  - fast, open-source, in-memory key-value data store for use as a database, cache, message broker and queue
+  - sub-milliseconds response time enabling millions of of requests per second for real time applications in gaming, ad-tech, financial services, health care and IoT
+  - All redis data reside in memory
   - multi-AZ with auto-failover, high availability
   - read replicas and replication
+  - It is a popular choice for:
+    - caching
+    - session mgmt
+    - gaming
+    - leaderboards
+    - real-time analytics
+    - geospatial
+    - ride-hailing
+    - chat/messaging
+    - media streaming
+    - pub/sub apps
+  - more sophisticated use cases compared to `memcached`
   - IAM authentication
   - Redis AUTH (password/token)
   - AOF for data durability, backup, restore, supports sets and sorted sets
@@ -1695,7 +1781,7 @@ resilience4j.retry:
 - We need a key resolver to decide i.e user, ip address etc using [keyResolver](https://docs.spring.io/spring-cloud-gateway/docs/4.0.7/reference/html/#the-requestratelimiter-gatewayfilter-factory)
 - The default implementation of `KeyResolver` is the `PrincipalNameKeyResolver` (current logged-in username)
 
-#### Redis implementation (Stripe)
+**Redis implementation (Stripe)**
 - [Implementation](https://docs.spring.io/spring-cloud-gateway/docs/4.0.7/reference/html/#the-redis-ratelimiter) using Redis (Stripe team implementation): [link](https://stripe.com/blog/rate-limiters)
 - Different scenarios listed in Stripe blog
 - The algorithm used is the [Token Bucket Algorithm](https://en.wikipedia.org/wiki/Token_bucket).
@@ -1751,7 +1837,7 @@ spring:
       timeout: 1s
 ```
 
-##### Demo
+**Demo**
 1. Start redis locally
 ```
 docker run -p 6379:6379 --name bank-redis -d redis
@@ -2111,17 +2197,18 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
 - How to partition: i.e specific state, zipcode, region goes to one partition
 
 ### Setup
-#### Setup Kafka cluster locally
+**Setup Kafka cluster locally**
 - go to apache kafka [web](https://kafka.apache.org/quickstart) 
 - Download first
 - Setup Kafka with KRaft
 - Follow the steps to setup local kafka cluster
-#### Configure microservices to connect
+
+**Configure microservices to connect**
 - Added Kafka binders as shown in pom.xml of account and message service
 - Add kafka binder in application.yml
 - *NOTE:* To see two binders (kafka and rabbitmq) at play, we use two binders for two communication channels
 
-#### Kafka setup in docker compose
+**Kafka setup in docker compose**
 - Use this as [reference](https://github.com/bitnami/containers/tree/main/bitnami/kafka)
 
 # Orchestration - Kubernetes
@@ -2318,7 +2405,7 @@ spec:
 - Internal traffic (east-west) is guarenteed security by:
   - Being closed to outside world
   - Service mesh
-#### Capabilities:
+**Capabilities:**
   - Service discovery
   - Load balancing
   - Circuit breaker
@@ -2330,12 +2417,12 @@ spec:
 
 ![service-mesh.png](media/service-mesh.png)
 
-#### Service mesh components
+**Service mesh components**
 1. Data plane: Responsible for routing traffic between services using sidecar proxies
 2. Control plane: Responsible for configuring, managing, and monitoring proxies. It includes components like control plane API, service discovery and configuration management
 ![data-control-plane-istio-sidecar-service-mesh.png](media/data-control-plane-istio-sidecar-service-mesh.png)
 
-#### TLS
+**TLS**
 - TLS: transport layer security. Secured transmission of data. Used in browser based exchanges
 - TLS is an encryption protocol
 - Third party issue the certificate which has a validity
@@ -2345,7 +2432,7 @@ spec:
 
 ![TSL-workflow.png](media/TSL-workflow.png)
 
-#### mTLS
+**mTLS**
 - When the TLS steps followed by both the parties (service-to-service, within cluster communication). Both should prove their identities.
 - No need of external CA. 
 - Service mesh will act as a certificate authority (CA)
@@ -2355,17 +2442,17 @@ spec:
 
 ![mTLS-workflow.png](media/mTLS-workflow.png)
 
-##### Advantages of mTLS
-- Mutual Authentication
-- Protection against impersonation
-- Granular access control
-- Resistance to credential compromise
-- Simplified key management as CA is local resource
-- No scalability issue of keys
-- Compliance to GDPR, HIPAA, PCI DSS etc
-- Zero Trust Security framework
+- **Advantages of mTLS**
+  - Mutual Authentication
+  - Protection against impersonation
+  - Granular access control
+  - Resistance to credential compromise
+  - Simplified key management as CA is local resource
+  - No scalability issue of keys
+  - Compliance to GDPR, HIPAA, PCI DSS etc
+  - Zero Trust Security framework
 
-#### Popular service meshes:
+**Popular service meshes:**
 1. Istio
 2. Linkerd
 3. Consul
@@ -2979,10 +3066,10 @@ WHERE job_name = 'Software Developer'
 RETURNING job_id, job_name
 ```
 
-#### CHECK
+**CHECK**
 - i.e age SMALLINT CHECK (age > 21), parent_age SMALLINT CHECK (parent_age > age)
 
-#### [ALTER](https://www.postgresql.org/docs/current/sql-altertable.html)
+**[ALTER](https://www.postgresql.org/docs/current/sql-altertable.html)**
 - Add, delete, rename columns
 - Change column data type
 - Set default values for columns
@@ -3000,7 +3087,7 @@ ALTER TABLE students
 ALTER COLUMN homeroom_number TYPE INTEGER
 ```
 
-#### DROP column
+**DROP column**
 - It will not remove columns used in views, triggers or stored procedures without additional CASCADE claus
 - To achieve this as well
 ```

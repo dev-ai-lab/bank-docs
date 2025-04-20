@@ -255,6 +255,75 @@
 | Pricing                  | Lower                          | ~20% higher but better efficiency      |
 | Backup Retention         | 1–30 days                      | 1–35 days                              |
 
+---
+
+## ⚙️ What Are RDS Parameter Groups?
+
+An **RDS Parameter Group** is like a **configuration profile** for your RDS or Aurora DB instance or cluster.
+
+It contains settings that define the behavior of the database engine — kind of like editing your `my.cnf` or `postgresql.conf` file in a traditional setup.
+
+---
+
+### 🧩 Types of Parameter Groups
+
+There are **two main types**, depending on the engine:
+
+| Type                    | Used For                              |
+|-------------------------|----------------------------------------|
+| **DB Parameter Group**  | RDS instance-level parameters (MySQL, PostgreSQL, etc.) |
+| **DB Cluster Parameter Group** | Aurora cluster-level settings (Aurora MySQL, Aurora PostgreSQL) |
+
+> For **Aurora**, some settings go in the **cluster parameter group**, while others (like memory or log settings) go in the **instance-level parameter group**.
+
+---
+
+### 🔧 Examples of Things You Can Configure
+
+- `max_connections`
+- `log_statement`
+- `innodb_buffer_pool_size`
+- `autovacuum`
+- `slow_query_log`
+- `timezone`
+- `log_min_duration_statement`
+
+---
+
+### 🛠️ How to Use a Parameter Group
+
+1. **Create a custom parameter group** from the RDS Console or CLI.
+2. **Modify the parameters** you need.
+3. **Assign it to your DB instance or cluster.**
+4. **Reboot** the DB instance if the parameters require it.
+
+> Some changes are **dynamic** (apply immediately), others are **static** (require reboot).
+
+---
+
+### ⚠️ Important Notes
+
+- If you don’t explicitly assign one, your DB uses the **default parameter group**, which is **read-only**.
+- Always create and use a **custom parameter group** when you need to tweak engine behavior.
+
+---
+
+### 🧠 Tip for Aurora Users:
+- **Aurora MySQL / PostgreSQL** has both **DB cluster parameter group** and **DB parameter group** — you'll usually need to modify both.
+
+---
+
+## ✅ TL;DR on Parameter Groups
+
+| Feature              | RDS                                  | Aurora                                 |
+|----------------------|---------------------------------------|-----------------------------------------|
+| Config Scope         | Per instance                         | Per cluster + per instance              |
+| Default Group        | Read-only                            | Read-only                               |
+| Custom Group         | Editable, required for tuning        | Editable, required for tuning           |
+| Apply Type           | Dynamic or Static (reboot needed)    | Same                                    |
+
+---
+
 ## Aurora DB Demo
 - Aurora Setup Demo
 
