@@ -1491,8 +1491,8 @@ Aurora separates **compute** (DB instances) from **storage** (cluster volume):
 
 ![aurora-global.png](media/aurora-global.png)
 
-
-### 1. ✅ **Aurora Standby Equivalent (High Availability)**
+### Aurora vs RDS
+1. ✅ **Aurora Standby Equivalent (High Availability)**
 
 - Aurora doesn’t use a traditional **standby instance** like RDS does.
 - Instead, it has a **clustered setup** where:
@@ -1505,7 +1505,7 @@ Aurora separates **compute** (DB instances) from **storage** (cluster volume):
 
 ---
 
-### 2. ✅ **Aurora Read Replicas (Scaling)**
+2. ✅ **Aurora Read Replicas (Scaling)**
 
 - You can add **up to 15 read replicas** (Aurora Replicas) per cluster.
 - These:
@@ -1516,7 +1516,7 @@ Aurora separates **compute** (DB instances) from **storage** (cluster volume):
 
 ---
 
-### 🤖 Failover Logic in Aurora
+**Failover Logic in Aurora**
 
 If the writer fails:
 - Aurora **promotes a reader** to be the new writer.
@@ -1524,7 +1524,7 @@ If the writer fails:
 
 ---
 
-### **Summary: Aurora vs RDS**
+**Summary: Aurora vs RDS**
 
 | Feature | Aurora | Traditional RDS |
 |--------|--------|-----------------|
