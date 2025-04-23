@@ -12,7 +12,7 @@
 # 📦 AWS RDS (Relational Database Service)
 
 ## 🔍 Overview
-- **Fully managed** relational database service.
+- **Fully managed** relational database service (continuous backup & restore, monitoring).
 - Supports **MySQL, PostgreSQL, MariaDB, Oracle, SQL Server, and Aurora**.
 - No **SSH access** to DB instances.
 - Billing based on:
@@ -35,13 +35,22 @@
     - Cross-AZ
     - Cross-region
 - Read replica can be **promoted** to master.
+- To leverage read replicas, `applicaiton` must be updated
+- Read client in a different region can use that region's read replica
 - Use case: **analytics, reporting** without impacting production DB.
-- Traffic between AZs may incur cost unless within same region.
 - Replication is **one-way**, used for **read scalability**.
 
 ![aws-rds-read-replica.png](media/aws-rds-read-replica.png)
+- Complete Multi-AZ Setup
 
 ![VPC-AWS-RDS.png](media/VPC-RDS-setup.png)
+
+**Network Cost and Read Replicas**
+- Usually traffic between AZs incur additional costs
+- However, for RDS read replicas within the same region, you don't pay that fee.
+- i.e `Master (M)` in `us-east-1a` replicates the data to `read replica (R)` in `us-east-1b` without cross AZ costs.
+- Cross-region will incur costs (replication fee)
+
 ### 🛡️ Multi-AZ (High Availability & DR)
 - **Synchronous replication** for HA.
 - Automatic **failover** in case of:
@@ -49,10 +58,22 @@
     - Network issues
     - Storage or DB instance issues
 - **No performance boost**, purely for **availability**.
-- Setup:
-    - Modify existing DB to Multi-AZ → standby created from snapshot.
+- No manual intervention in app (automatic)
+  - AWS RDS simply flips the CNAME for the DB to point to the standby, which in turm promoted to become primary
+- Note: A read replica can be setup as multi-AZ for DR
+- Going from Single-AZ to Multi-AZ
+  - zero downtime, just modify
+  - an standby will be brought up
+    - a snapshot is taken
+    - a new DB is restored from snapshot in the new AZ
+    - synchronization is established between the two DBs
 
 ![multi-az-dr-availability.png](media/multi-az-dr-availability.png)
+
+- Data sync between master and standby each 5 minutes
+- Failover in 1 to 2 minutes
+- Upgrade: first on standby, reroute traffic to standby and so on
+- Backups can be taken from standby to avoid impacts
 
 ---
 
@@ -68,11 +89,13 @@
 ---
 
 ### 🔁 Backups & Snapshots
-- **Automated backups**:
+- **Automated backups (snapshots)**:
     - Daily full backup during backup window
     - Transaction logs every 5 mins
+      - so you can restore to any point in time (till 5 minutes ago)
     - Retention: 1–30 days
 - **Manual Snapshots**:
+    - manually triggered by the user
     - Long-term storage
     - Cheaper than running instance
     - Can be copied/shared across regions/accounts

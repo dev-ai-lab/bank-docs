@@ -1123,60 +1123,56 @@ In order to connect with db, use [SQLECTRON](https://sqlectron.github.io/) and `
 Create database for microservice and expose in different port in local machine.
 
 ## AWS RDS
-- Why RDS instead of own DB:
-  - managed service, continuous backup & restore, monitoring
-  - improved read performance using read replicas
-  - Multi-AZ for DR
-  - Scaling capabilities (H & V)
-- No `SSH` connection is possible to RDS
-- RDS: Supports MySQL, MariaDB, PostgreSQL, Oracle, Ms SQL, and Aurora
+- **Fully managed** relational database service (continuous backup & restore, monitoring).
+- Supports **MySQL, PostgreSQL, MariaDB, Oracle, SQL Server, and Aurora**.
+- No **SSH access** to DB instances.
+- Billing based on:
+  - Storage capacity used
+  - I/O requests
+  - Backup storage
+  - Data transfer
+- Instance types: **On-Demand** (pay-as-you-go)
+- Part of **VPC** for security and network configuration
+
 - EBS volume used - auto-scaling 
   - when RDS detects you are running out of free DB storage, it scales automatically
   - you set a max storage threshold too
   - i.e modify storage if free storage is less than 10% of allocated storage, and low storage lasts less than 4 minutes and 6 hours passed since last modification
   - available for all types of db engines in RDS
-- Billing based on:
-  - Storage Capacity used
-  - I/O requests per month
-  - Backup Storage used
-  - Data Transfers
-- On-demand instances (Pay-as-you-go)
 - VPC concept
 
 ### Read Replicas (DB Performance)
-- Improves performance and readability
-- Async replicas
-- Up to 15 replicas:
-  - Within AZ, cross AZ, or cross region.
-  - Read client in a different region can use that region's read replica
-  - replication is `async`, so reads are eventually consistent
-  - read replicas can be promoted to their own DB
-  - To leverage read replicas, `applicaiton` must be updated
-  - Use case: in a one instance DB, we want to add reporting and analytics on top of normal application activities -->
-    - We create a `read replica` (select SQLs)
-    - production application is unaffected
-  - Write on the master
-- Read replica can be promoted to master
-- A read replica can have master and standby as in normal case
-- Read replicas and sharding (i.e halving the DB). Master with Read replica. Read replica then promoted to master and replication link broken
-- Hands-on: DB --> Actions --> Add reader (choose a region, multi-az?, ): snapshot is taken from master instance
+- Improves **read performance**.
+- **Async replication**, eventually consistent.
+- Up to **15 replicas** across:
+  - Same AZ
+  - Cross-AZ
+  - Cross-region
+- Read replica can be **promoted** to master.
+- To leverage read replicas, `applicaiton` must be updated
+- Read client in a different region can use that region's read replica
+- Use case: **analytics, reporting** without impacting production DB.
+- Replication is **one-way**, used for **read scalability**.
 
 ![aws-rds-read-replica.png](media/aws-rds-read-replica.png)
+- Complete Multi-AZ Setup
 
 ![VPC-AWS-RDS.png](media/VPC-RDS-setup.png)
 
 **Network Cost and Read Replicas**
-- Traffic between AZs incur additional costs
+- Usually traffic between AZs incur additional costs
 - However, for RDS read replicas within the same region, you don't pay that fee.
 - i.e `Master (M)` in `us-east-1a` replicates the data to `read replica (R)` in `us-east-1b` without cross AZ costs.
 - Cross-region will incur costs (replication fee)
 
 ### Multi-AZ in RDS (Disaster Recovery & availability)
-- SYNC replication from primary to secondary
-- Failover if:
-  - AZ is lost
-  - network issue
-  - instance or storage failure
+
+- **Synchronous replication** for HA.
+- Automatic **failover** in case of:
+  - AZ failure
+  - Network issues
+  - Storage or DB instance issues
+- **No performance boost**, purely for **availability**.
 - No manual intervention in app (automatic)
   - AWS RDS simply flips the CNAME for the DB to point to the standby, which in turm promoted to become primary
 - Note: A read replica can be setup as multi-AZ for DR
@@ -1189,30 +1185,47 @@ Create database for microservice and expose in different port in local machine.
 
 ![multi-az-dr-availability.png](media/multi-az-dr-availability.png)
 
-- Primary goal is improving availability and no performance benefits
 - Data sync between master and standby each 5 minutes
 - Failover in 1 to 2 minutes
 - Upgrade: first on standby, reroute traffic to standby and so on
 - Backups can be taken from standby to avoid impacts
 
-### Resource creation
-- VPC creation:
-  - Go to AWS, search VPC and create one
-- RDS creation:
-  1. Go to AWS RDS resource
-  2. Create new `Subnet Group`
-     1. Use created VPC 
-     2. Use created `Subnets`
-  3. Go to `Create Database` and select the right DB instance to create
-     1. Storage setup:
-        1. gp3:
-        2. Allocated storage size
-        3. `Enable storage autoscaling`
-        4. Max storage and scaling at rate of `10%`
-  4. Connectivity Setup 
-     1. Don't connect to an EC2 vs Setup connection to a EC2 instance
-  5. Choose subnet group created in `2.`
-  6. Create security group. It a place with port to access RDS instances. It is created under VPC
+
+Let’s break it down in terms of **disaster recovery (DR)** vs **high availability (HA)** — these are similar but serve different goals:
+
+---
+
+### Why Still Use a **Standby (Multi-AZ)** if Read Replicas Can Be Used for DR?
+
+| Aspect | Multi-AZ Standby | Read Replica |
+|--------|------------------|--------------|
+| **Failover time** | 🚀 Fast (~60 seconds, automatic) | 🐌 Slow (manual promotion required) |
+| **Consistency** | 🔒 Synchronous (no data loss) | 🕒 Asynchronous (may lose last writes) |
+| **Automatic recovery** | ✅ Yes (handled by RDS) | ❌ No (you must manually promote) |
+| **Role** | Transparent HA/Failover | Read scaling + Optional DR |
+| **Read access** | ❌ No (standby is hidden) | ✅ Yes |
+| **Use for scaling?** | ❌ No | ✅ Yes |
+| **Cost** | 💸 Included in Multi-AZ pricing | 💸 Extra per replica |
+
+---
+
+### 🧠 Key Points:
+1. **Multi-AZ is about availability**, not scaling or geo-redundancy.
+  - You want your app to **keep running during failures**, automatically, with **zero ops effort**.
+  - RDS handles **instant failover**, **DNS updates**, **no manual intervention**.
+
+2. **Read Replicas are about scalability and optional DR.**
+  - If your **primary fails**, you must **promote manually**.
+  - Data might be lost due to **replication lag**.
+  - Better for **low RTO/RPO requirements** in non-critical situations, or **cross-region DR** where Multi-AZ isn’t enough.
+
+---
+
+### 🚦 Real-World Analogy:
+
+- **Standby (Multi-AZ):** Like a **hot spare tire** in your car — already mounted, ready to take over instantly if one fails.
+- **Read Replica:** Like a **second car** parked nearby — can take over if needed, but someone has to **go get it, start it, and maybe adjust the seat.**
+
 
 ### RDS and IAM
 - Users, groups, roles, policies
@@ -1224,6 +1237,12 @@ Create database for microservice and expose in different port in local machine.
 - Authenticate with `Secrets Manager`
   - Rotation schedule (lambda) to change it constantly
   - EC2 get a role to retrieve credentials from Secret Manager and use it to connect to RDS
+- Should be deployed in **private subnet** (not public internet).
+- Security via:
+  - Security groups (stateful firewall)
+  - Network ACL (optional)
+  - IAM for authentication
+  - **Secrets Manager** for secure password rotation
 
 ### RDS Parameter Groups
 - To configure DB, we use parameter group (PG)
@@ -1231,6 +1250,25 @@ Create database for microservice and expose in different port in local machine.
 - Under DB instance --> Configuration --> find the Parameter Group used
   - One can edit the PG and add new values for any parameters listed.
 ### Option group
+
+### RDS Resource creation
+- VPC creation:
+  - Go to AWS, search VPC and create one
+- RDS creation:
+  1. Go to AWS RDS resource
+  2. Create new `Subnet Group`
+    1. Use created VPC
+    2. Use created `Subnets`
+  3. Go to `Create Database` and select the right DB instance to create
+    1. Storage setup:
+      1. gp3:
+      2. Allocated storage size
+      3. `Enable storage autoscaling`
+      4. Max storage and scaling at rate of `10%`
+  4. Connectivity Setup
+    1. Don't connect to an EC2 vs Setup connection to a EC2 instance
+  5. Choose subnet group created in `2.`
+  6. Create security group. It a place with port to access RDS instances. It is created under VPC
 
 ### RDS Demos
 - Configuration
@@ -1245,21 +1283,17 @@ Create database for microservice and expose in different port in local machine.
 
 ![rds-additional-features.gif](media/rds-additional-features.gif)
 
-### RDS vs RDS custom
-- RDS automates setup, operation, and scaling of database in AWS
-- RDS custom gives access to the underlying database and OS (configure, install patches etc) as well as access to underlying EC2 instance using SSH
-  - available only for Oracle & SQL server database
-  - deactivate `automation mode` when customizing and better to take snapshots
-
 ### RDS Backups
-- Automated Backup:
-  - RDS automated backup (takes snapshot)
-  - Daily full backup (during backup window time)
-  - Transaction logs backed up by RDS every 5 minutes
+- **Automated backups (snapshots)**:
+  - Daily full backup during backup window
+  - Transaction logs every 5 mins
     - so you can restore to any point in time (till 5 minutes ago)
-  - 1 to 30 days of retention period, set to 0 to disable automated backup
-- RDS snapshots (manual or on demand backup)
+  - Retention: 1–30 days
+- RDS snapshots (manual or on demand backup):
   - manually triggered by the user
+  - Long-term storage
+  - Cheaper than running instance
+  - Can be copied/shared across regions/accounts
   - retention for as long as you want
   - Hint: stopped RDS database will still incur costs for storage. Better make snapshot, then delete it and later if needed restore again.
     - snapshots costs way less than the actual storage
@@ -1272,14 +1306,63 @@ Create database for microservice and expose in different port in local machine.
   - with this method, a DB can be moved to another region (from frankfurt to london). In london, go to RDS->snapshots
   - Can be shared with another aws account (using account id). Go to that account: RDS->snapshots->shared with me
     - The snapshot is encrypted. The other account should have access to ecryption in order to restore the DB
+- To **encrypt unencrypted DB**:
+  - Take snapshot → copy with encryption → restore
 
-### Aurora DB
-- It proprietary tech from AWS
-- MySQL & Postgres compatible:
-  - meaning the driver will work as if Aurora was a Postgres or MySQL database
-- 3x the performance of postgres and 5x the performance of mysql
-- Support upto 15 read replicas along with writer(master node) that supports auto-scaling (very fast sub 10 minutes). It has cluster (write) endpoints.
-  - read replicas support cross region replication
+### RDS vs RDS custom
+- RDS automates setup, operation, and scaling of database in AWS
+- RDS custom gives access to the underlying database and OS (configure, install patches etc) as well as access to underlying EC2 instance using SSH
+  - available only for Oracle & SQL server database
+  - deactivate `automation mode` when customizing and better to take snapshots
+
+| Feature          | RDS                         | RDS Custom                         |
+|------------------|------------------------------|-------------------------------------|
+| OS-level access | ❌ No                         | ✅ Yes (SSH, root access)           |
+| Use Cases       | General apps                 | Custom configurations, legacy apps |
+| Supported Engines | All major engines incl. Aurora | Only Oracle & SQL Server           |
+
+### RDS Security
+- At-rest encryption:
+  - master and replicas encryption using AWS KMS - defined as launch time
+- RDS shouldn't be accessible to the internet (should reside in private subnet)
+- Security group (stateful firewall)
+  - block specific IPs, ports, or SGs
+- encryption:
+  - if master not encrypted, replica can't be encrypted
+  - to encrypt un-encrypted DB, create snapshot, copy it with ticked "enable encryption", and restore the RDS instance from encrypted snapshot
+  - in-flight encryption:
+    - RDS creates an SSL cert and install the cert on the DB instance when the DB is provisioned
+    - these certs are signed by CA
+    - The SSL cert includes the DB instance endpoint as the CN for the SSL certificate to guard against spoofing attacks
+    - download the root cert from the aws that works for all regions or a region-specific intermediate cert and use it to connect to the DB
+- In addition to security group, one can configure network ACL (not stateful firewall)
+- IAM role to connection and authenticate like user/pass
+- Audit logs can be enabled and sent to CloudWatch for longer retention
+
+## RDS Proxy
+- It manages incoming connections to prevent the db from being overwhelmed (stressed on CPU, RAM)
+- Fully managed, **multi-AZ**, **autoscaling**
+- It minimizes open connections (timeouts) and pools connections to the RDS
+  - it allows apps to pool and share connections
+- It reduces RDS & Aurora failover time by upto 66%
+- supports MySQL, Postgres, MariaDB, MS SQL, and Aurora (MySQL, Postgres)
+- It is never publicly accessible (must be accessed from VPC)
+- Improves db scalability when many users
+- Caching for common queries - improved performance by
+- So it is basically a loadbalancer thing
+- Can be integrated with IAM and AWS secret manager
+- Use case: a crucial use case is when 1000s of lambda functions coming up & going down want to access the DB
+
+![aws-rds-proxy.png](media/aws-rds-proxy.png)
+
+## Aurora DB
+
+Aurora separates **compute** (DB instances) from **storage** (cluster volume):
+
+- **Storage:** Shared, auto-replicated **six-way across 3 AZs** (super durable).
+- **Compute nodes:** Writer + multiple Readers.
+
+- Similar to RDS Read replica.
 - Failover:
   - It is instantaneous
   - read replicas are assigned priority (0-15)
@@ -1387,57 +1470,73 @@ Create database for microservice and expose in different port in local machine.
 
 ![aurora-serverless.png](media/aurora-serverless.png)
 
-- Global Aurora
-  - Aurora cross-region read replicas
-  - Aurora Global DB (recommended)
-    - 1 primary region (read/write)
-    - upto 5 secondary (read-only) regions, replication lag is less than 1 second
-    - upto 16 read replicas per secondary region
-    - if a DB in a region fails, another region can be promoted in less than 1 minute
-    - cross-region replication takes less than `1 second
+### Global Aurora
+- Aurora cross-region read replicas
+- Aurora Global DB (recommended)
+  - 1 primary region (read/write)
+  - upto 5 secondary (read-only) regions, replication lag is less than 1 second
+  - upto 16 read replicas per secondary region
+  - if a DB in a region fails, another region can be promoted in less than 1 minute
+  - cross-region replication takes less than `1 second
 
 ![aurora-global.png](media/aurora-global.png)
 
-- Aurora ML Integration
-  - Add ML based prediction to the application
-  - SageMaker
-  - Amazon Comprehend
-  - Use cases:
-    - fraud detection, ads targeting, sentiment analysis, product recommendation
+
+### 1. ✅ **Aurora Standby Equivalent (High Availability)**
+
+- Aurora doesn’t use a traditional **standby instance** like RDS does.
+- Instead, it has a **clustered setup** where:
+  - The **writer instance** handles writes.
+  - **Reader instances** can be promoted to writer on failure.
+- **Failover is automatic** and fast (~30 seconds or less).
+- Since all nodes share the same distributed storage, there's **no replication lag** during failover.
+
+> 🧠 So in Aurora, **standby = auto-failover to a reader instance**.
+
+---
+
+### 2. ✅ **Aurora Read Replicas (Scaling)**
+
+- You can add **up to 15 read replicas** (Aurora Replicas) per cluster.
+- These:
+  - Share the same storage (no async replication like RDS).
+  - Can serve **low-latency reads**.
+  - Can be **promoted to writer** during failover (i.e., HA + DR).
+- Reader nodes can be **in the same region or cross-region**.
+
+---
+
+### 🤖 Failover Logic in Aurora
+
+If the writer fails:
+- Aurora **promotes a reader** to be the new writer.
+- This is **automated**, and faster than traditional RDS Multi-AZ failover.
+
+---
+
+### **Summary: Aurora vs RDS**
+
+| Feature | Aurora | Traditional RDS |
+|--------|--------|-----------------|
+| **Standby instance?** | ❌ Not needed (shared storage) | ✅ Synchronous replica |
+| **Read replicas?** | ✅ Up to 15, low latency | ✅ Async replication |
+| **Failover time** | ⚡ Fast (<30s) | ~60–120s |
+| **Storage replication** | ✅ Built-in 6-way | ❌ Tied to instance |
+| **Cross-region replicas** | ✅ Yes | ✅ Yes (for supported engines) |
+
+---
+
+For clear distinction between Aurora and RDS see this [readme](database.md)
+
+### Aurora ML Integration
+- Add ML based prediction to the application
+- SageMaker
+- Amazon Comprehend
+- Use cases:
+  - fraud detection, ads targeting, sentiment analysis, product recommendation
 
 ![aurora-ml-integration.png](media/aurora-ml-integration.png)
 
-### RDS & Aurora Security and Proxy
-- At-rest encryption:
-  - master and replicas encryption using AWS KMS - defined as launch time
-- RDS shouldn't be accessible to the internet (should reside in private subnet)
-- Security group (stateful firewall)
-  - block specific IPs, ports, or SGs
-- encryption:
-  - if master not encrypted, replica can't be encrypted
-  - to encrypt un-encrypted DB, create snapshot, copy it with ticked "enable encryption", and restore the RDS instance from encrypted snapshot
-  - in-flight encryption TLS-read by default, use AWS TLS root cert
-- In addition to security group, one can configure network ACL (not stateful firewall)
-- IAM role to connection and authenticate like user/pass
-- Audit logs can be enabled and sent to CloudWatch for longer retention
-
-- RDS Proxy
-  - It manages incoming connections to prevent the db from being overwhelmed (stressed on CPU, RAM)
-  - it is fully managed, serverless, autoscaling, highly available (multi-az)
-  - It minimizes open connections (timeouts) and pools connections to the RDS
-    - it allows apps to pool and share connections
-  - It reduces RDS & Aurora failover time by upto 66%
-  - supports MySQL, Postgres, MariaDB, MS SQL, and Aurora (MySQL, Postgres)
-  - It is never publicly accessible (must be accessed from VPC)
-  - Improves db scalability when many users
-  - Caching for common queries - improved performance by
-  - So it is basically a loadbalancer thing
-  - Can be integrated with IAM and AWS secret manager
-  - Use case: a crucial use case is when 1000s of lambda functions coming up & going down want to access the DB
-
-![aws-rds-proxy.png](media/aws-rds-proxy.png)
-
-For clear distinction between Aurora and RDS see this [readme](database.md)
 ## AWS ElastiCache
 - like RDS, it is a managed Redis, Memcached
 - HIPAA (health) compliant
@@ -1475,6 +1574,7 @@ For clear distinction between Aurora and RDS see this [readme](database.md)
   - non-persistent
   - back & restore only in serverless one
   - multi-threaded architecture
+  - simplest model possible
 - Patterns for loading data into ElastiCache
   - lazy loading: all data cached, stale
   - write through: add or update the data in the cache when written to the DB, no stale data
