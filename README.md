@@ -54,7 +54,7 @@
     * [Why Still Use a **Standby (Multi-AZ)** if Read Replicas Can Be Used for DR?](#why-still-use-a-standby-multi-az-if-read-replicas-can-be-used-for-dr)
     * [🧠 Key Points:](#-key-points)
     * [🚦 Real-World Analogy:](#-real-world-analogy)
-    * [RDS and IAM](#rds-and-iam)
+    * [RDS and IAM Authentication](#rds-and-iam-authentication)
     * [RDS Parameter Groups](#rds-parameter-groups)
     * [Option group](#option-group)
     * [RDS Resource creation](#rds-resource-creation)
@@ -1234,22 +1234,50 @@ Let’s break it down in terms of **disaster recovery (DR)** vs **high availabil
 - **Read Replica:** Like a **second car** parked nearby — can take over if needed, but someone has to **go get it, start it, and maybe adjust the seat.**
 
 
-### RDS and IAM
-- Users, groups, roles, policies
-- Authenticate with IAM:
-  - Steps:
-    - IAM ROLE X --> i.e
-    - Assign X role to an EC2 (like ID card)
-    - EC2 presents ID to RDS instance. RDS has a user associated with this ID coming from EC2
-- Authenticate with `Secrets Manager`
-  - Rotation schedule (lambda) to change it constantly
-  - EC2 get a role to retrieve credentials from Secret Manager and use it to connect to RDS
-- Should be deployed in **private subnet** (not public internet).
-- Security via:
-  - Security groups (stateful firewall)
-  - Network ACL (optional)
-  - IAM for authentication
-  - **Secrets Manager** for secure password rotation
+### RDS and IAM Authentication
+
+1. **Security & Deployment**
+   - **Deploy RDS in a private subnet** (no public internet access).
+   - Use multiple layers for security:
+     - **Security Groups** (stateful firewall)
+     - **Network ACLs** (optional, stateless)
+     - **IAM** for authentication
+     - **AWS Secrets Manager** for credential management
+
+---
+
+2. **Authentication Options**
+  - A. **IAM Authentication (Passwordless)**
+    - Secure, temporary access via IAM roles and STS.
+    - Flow:
+      1. Create an **IAM role** with RDS access.
+      2. **Attach the role to an EC2** (or other compute service).
+      3. RDS user is mapped to the IAM identity.
+      4. The app connects using an **IAM auth token** (via STS).
+
+> No stored credentials; uses short-lived tokens.
+
+---
+
+B. **Secrets Manager (With Password)**
+  - Stores and rotates RDS credentials securely.
+  - Flow:
+    1. Store DB credentials in **Secrets Manager**.
+    2. App or EC2 **assumes a role** to access the secret.
+    3. App retrieves credentials and connects to RDS.
+
+> Supports automatic password rotation via Lambda.
+
+---
+
+3. **AWS STS (Security Token Service)**
+   - Provides **temporary credentials** for assuming IAM roles.
+   - Powers:
+     - IAM authentication to RDS
+     - Access to Secrets Manager
+     - Federated access via CLI/SDK
+
+---
 
 ### RDS Parameter Groups
 - To configure DB, we use parameter group (PG)
@@ -1295,7 +1323,8 @@ Let’s break it down in terms of **disaster recovery (DR)** vs **high availabil
   - Daily full backup during backup window
   - Transaction logs every 5 mins
     - so you can restore to any point in time (till 5 minutes ago)
-  - Retention: 1–30 days
+    - point-in-time recovery needs native RDS backup (automated)
+  - Retention: 0 – 35 days
 - RDS snapshots (manual or on demand backup):
   - manually triggered by the user
   - Long-term storage
