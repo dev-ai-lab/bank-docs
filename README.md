@@ -64,6 +64,10 @@
     * [RDS Security](#rds-security)
   * [RDS Proxy](#rds-proxy)
   * [Aurora DB](#aurora-db)
+    * [Aurora Storage:](#aurora-storage)
+    * [Aurora Instance Class:](#aurora-instance-class)
+    * [Aurora DB creation](#aurora-db-creation)
+    * [Aurora Endpoints:](#aurora-endpoints)
     * [Global Aurora](#global-aurora)
     * [Aurora vs RDS](#aurora-vs-rds)
     * [Aurora ML Integration](#aurora-ml-integration)
@@ -1308,15 +1312,15 @@ B. **Secrets Manager (With Password)**
 ### RDS Demos
 - Configuration
 
-![rds-postgres-config.gif](media/rds-postgres-config.gif)
+[rds-postgres-config.gif](media/rds-postgres-config.gif)
 
 - Connection to the DB
 
-![rds-postgres-connection.gif](media/rds-postgres-connection.gif)
+[rds-postgres-connection.gif](media/rds-postgres-connection.gif)
 
 - Additional features
 
-![rds-additional-features.gif](media/rds-additional-features.gif)
+[rds-additional-features.gif](media/rds-additional-features.gif)
 
 ### RDS Backups
 - **Automated backups (snapshots)**:
@@ -1418,14 +1422,14 @@ Aurora separates **compute** (DB instances) from **storage** (cluster volume):
   - Read replicas can have auto-scaling. How the apps can keep track of the read replicas then? Using read endpoint (DNS name)
 
 ![aurora-db-w-r-endpoint.png](media/aurora-db-w-r-endpoint.png)
-- Aurora Storage:
-  - Storage scaling in increment of 10GB, upto 128 TB
-  - Aurora I/O-Optimized:
-    - For i/o intensive use cases
-    - But more expensive per GB
-    - Not paying for read and writes
-  - Aurora Standard
-    - Cheaper per GB
+### Aurora Storage:
+- Storage scaling in increment of 10GB, upto 128 TB
+- Aurora I/O-Optimized:
+  - For i/o intensive use cases
+  - But more expensive per GB
+  - Not paying for read and writes
+- Aurora Standard
+  - Cheaper per GB
 - Aurora Backup:
   - DB can be restored to any point in time (back and fort)
   - Automated Backup:
@@ -1439,16 +1443,8 @@ Aurora separates **compute** (DB instances) from **storage** (cluster volume):
 - Cache Scenario
   - Write through cache (see DB Cache in ElastiCache)
   - A complex query is coming again, is already stored
-- Aurora Global Databases
-  - Across multiple regions
-  - Upto 5 secondary regions
-  - If one region fails it fail over to another region
-- Aurora Serverless:
-  - Scaling provisioned cluster can be challenging
-  - Aurora serverless scales automatically (By automatically adjusting DB CPU, memory, network capacity)
-    - Elastic scaling (they all come up and go down when not used)
-  - One can add a serverless cluster on top of provisioned cluster. i.e Writer is provisioned while readers are serverless and vise versa
-- Aurora Instance Class:
+
+### Aurora Instance Class:
   - Provisioned
     - db.r7g.large: graviton
     - r is memory optimized
@@ -1460,7 +1456,7 @@ Aurora separates **compute** (DB instances) from **storage** (cluster volume):
   - decide based on use cases in hand
 - Aurora costs:
   - 20 % more costs, but more efficient
-**Aurora DB creation:**
+### Aurora DB creation
 - Enable global database flag
 - One can configure EC2 instance to connect to the DB
 - Security group selection
@@ -1495,7 +1491,22 @@ Aurora separates **compute** (DB instances) from **storage** (cluster volume):
 
 ![aurora-auto-scaling-endpoints.png](media/aurora-auto-scaling-endpoints.png)
 
-- Aurora Custom Endpoints
+### Aurora Endpoints:
+- **Aurora Reader Endpoint**:
+  - Automatically **distributes read traffic** across all available **read replicas** in the Aurora cluster.
+  - Ideal for **read scaling**—you just use one endpoint and Aurora balances the load.
+  - Automatically **updates when replicas are added or removed**.
+
+✅ Best for: **Read-heavy applications** needing high availability and load balancing.
+
+---
+
+- **Aurora Custom Endpoint**:
+  - Lets you **create your own endpoint** that points to a **specific subset of DB instances** (e.g., only certain replicas).
+  - Gives **fine-grained control** over which instances receive traffic.
+  - You define which instances the endpoint includes.
+
+✅ Best for: Workloads that need **custom routing**, like reporting queries to specific replicas.
 
 ![aurora-custom-endpoints.png](media/aurora-custom-endpoints.png)
 
@@ -1507,6 +1518,14 @@ Aurora separates **compute** (DB instances) from **storage** (cluster volume):
 ![aurora-serverless.png](media/aurora-serverless.png)
 
 ### Global Aurora
+- Across multiple regions
+- Upto 5 secondary regions
+- If one region fails it fail over to another region
+- Aurora Serverless:
+  - Scaling provisioned cluster can be challenging
+  - Aurora serverless scales automatically (By automatically adjusting DB CPU, memory, network capacity)
+    - Elastic scaling (they all come up and go down when not used)
+  - One can add a serverless cluster on top of provisioned cluster. i.e Writer is provisioned while readers are serverless and vise versa
 - Aurora cross-region read replicas
 - Aurora Global DB (recommended)
   - 1 primary region (read/write)
