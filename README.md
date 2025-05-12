@@ -1645,7 +1645,7 @@ For clear distinction between Aurora and RDS see this [readme](database.md)
 
 - Demos
 
-![elasticache-redis-demo.gif](media/elasticache-redis-demo.gif)
+[elasticache-redis-demo.gif](media/elasticache-redis-demo.gif)
 
 ## AWS No SQL 
 ### DynamoDB - NoSQL
@@ -1667,7 +1667,7 @@ For clear distinction between Aurora and RDS see this [readme](database.md)
 
 - Demos:
 
-![dynamodb-create-table.gif](media/dynamodb-create-table.gif)
+[dynamodb-create-table.gif](media/dynamodb-create-table.gif)
 - **DAX caching:**
   - Provides an in-memory cache for reduced read latency (microseconds) with a default 5-minute TTL.
   - helps solve read congestion
