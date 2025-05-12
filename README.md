@@ -1480,11 +1480,11 @@ Aurora separates **compute** (DB instances) from **storage** (cluster volume):
 **Aurora DB Demo**
 - Aurora Setup Demo
 
-![aurora-db-setup.gif](media/aurora-db-setup.gif)
+[aurora-db-setup.gif](media/aurora-db-setup.gif)
 
 - Aurora DB Interaction Demo
 
-![aurora-db-interaction.gif](media/aurora-db-interaction.gif)
+[aurora-db-interaction.gif](media/aurora-db-interaction.gif)
 
 **Aurora Advanced Concepts**
 - Auto-scaling automatic
