@@ -48,6 +48,11 @@
     * [Spring cloud bus](#spring-cloud-bus)
     * [Using webhook to avoid manual work](#using-webhook-to-avoid-manual-work)
 * [Database](#database)
+  * [General overview - AWS DB options](#general-overview---aws-db-options)
+    * [AWS Database Deployment Options – RDS & Aurora](#aws-database-deployment-options--rds--aurora)
+    * [🔄 High Availability & Read Scaling](#-high-availability--read-scaling)
+    * [🛠️ Decision Guide](#-decision-guide)
+    * [📊 Visual Overview](#-visual-overview)
   * [AWS RDS](#aws-rds)
     * [Read Replicas (DB Performance)](#read-replicas-db-performance)
     * [Multi-AZ in RDS (Disaster Recovery & availability)](#multi-az-in-rds-disaster-recovery--availability)
@@ -1132,6 +1137,116 @@ docker run -p 3306:3306 --name bank-account-db -e MYSQL_ROOT_PASSWORD=root -e MY
 ```
 In order to connect with db, use [SQLECTRON](https://sqlectron.github.io/) and `localhost:3306`.
 Create database for microservice and expose in different port in local machine.
+
+## General overview - AWS DB options
+
+
+### AWS Database Deployment Options – RDS & Aurora
+
+1. Amazon RDS (Relational Database Service)
+
+* **Engines supported:** MySQL, PostgreSQL, MariaDB, Oracle, SQL Server.
+* **Fully managed:** Backups, patching, scaling, monitoring.
+* **Deployment modes:**
+
+  * **Single-AZ:** Lowest cost, no HA.
+  * **Multi-AZ DB Instance:** 1 primary + 1 standby (synchronous, not readable). Failover ~60–120s.
+  * **Multi-AZ DB Cluster:** 1 writer + 2 readable standbys (across 3 AZs). Failover <40s. Built-in reader endpoint.
+
+* Additional feature (optional):
+  * Read Replicas (can be used with Single-AZ or Multi-AZ Instance). 
+  * Not generally needed for Multi-AZ Cluster because it has built-in readers.
+  * **Read Replicas:** Async replication, used for read scaling or cross-region DR (manual promotion required).
+
+---
+
+2. Amazon Aurora
+
+* **Engines:** Aurora MySQL & Aurora PostgreSQL (AWS-optimized).
+* **Storage:** Distributed, replicated 6-way across 3 AZs (128TB).
+* **Features:**
+
+  * **Aurora Cluster:** 1 writer + up to 15 readers (all share same storage, no replication lag).
+  * **Aurora Serverless v2:** On-demand auto-scaling compute for unpredictable workloads.
+  * **Aurora Global Database:** 1 primary + up to 5 secondary regions, replication <1s, failover <1min.
+* **Failover:** <30s, faster than RDS.
+* **Cost:** ~20% more than RDS, but better efficiency and performance per resource.
+---
+
+3. RDS Custom
+
+* **Available for:** Oracle & SQL Server only.
+* **Provides OS-level access (SSH, root).**
+* **Use case:** Legacy apps, custom configurations not possible in standard RDS.
+
+---
+
+### 🔄 High Availability & Read Scaling
+
+| Feature               | RDS Single-AZ | RDS Multi-AZ (Instance) | RDS Multi-AZ (Cluster) | RDS Read Replicas  | Aurora                            |
+| --------------------- | ------------- | ----------------------- | ---------------------- | ------------------ | --------------------------------- |
+| **HA / Failover**     | ❌ None        | ✅ Standby (~60–120s)    | ✅ <40s                 | ❌ Manual promotion | ✅ <30s                            |
+| **Standby Readable?** | ❌ No          | ❌ No                    | ✅ Yes (2 standbys)     | ✅ Yes              | ✅ Yes                             |
+| **Read Scaling**      | ❌ No          | ❌ No                    | ✅ Reader endpoint      | ✅ Async            | ✅ Reader endpoint                 |
+| **Cross-Region**      | ❌ No          | ❌ No                    | ❌ No                   | ✅ Yes              | ✅ Global DB                       |
+| **Replication Type**  | N/A           | Synchronous             | Synchronous            | Asynchronous       | Shared storage                    |
+| **Cost Base**         | 💲 Lowest     | 💲💲 (2 instances)      | 💲💲💲 (3 instances)   | 💲 per replica     | 💲💲💲 (20% higher but efficient) |
+
+
+### Reader Auto-scaling
+**RDS Multi-AZ DB Cluster (PostgreSQL/MySQL)**
+
+* You **manually add/remove reader instances**.
+* There is **no auto-scaling of readers** today.
+* The **reader endpoint** balances read queries across whatever readers you provision.
+* If you want to scale readers up or down, you must do it via the console/CLI/automation (e.g., CloudWatch alarms + Lambda).
+
+**Aurora**
+
+* **Aurora Serverless v2**:
+
+  * Readers scale up/down **automatically** (compute capacity adjusts in fine-grained ACUs).
+  * No need to manage the number of reader instances.
+* **Aurora provisioned clusters**:
+
+  * You still manually add/remove reader instances.
+  * BUT you can enable **Aurora Auto Scaling for replicas**, so Aurora automatically adds/removes read replicas based on CloudWatch metrics (e.g., CPU, connections).
+  * The **reader endpoint** automatically balances across the changing number of replicas.
+
+**Summary**
+
+* **RDS Multi-AZ DB Cluster:** ❌ No auto-scaling readers (manual only).
+* **Aurora Provisioned:** ⚡ Auto-scaling replicas available.
+* **Aurora Serverless v2:** ⚡ Auto-scaling compute per reader (most flexible, no replica management).
+
+---
+
+### 🛠️ Decision Guide
+
+* **RDS Single-AZ** → Development, testing, non-critical apps.
+* **RDS Multi-AZ Instance** → Production workloads needing HA, but no read scaling.
+* **RDS Multi-AZ Cluster** → Production workloads needing HA + built-in read offload (<40s failover).
+* **RDS Read Replicas** → Analytics/reporting, cross-region DR.
+* **Aurora** → Enterprise-grade HA & scaling, mission-critical, read-heavy workloads, serverless option.
+* **RDS Custom** → Oracle/SQL Server with custom OS/db configs.
+
+---
+
+### 📊 Visual Overview
+
+Here’s a suggested diagram (like your PDF style):
+
+* **RDS Multi-AZ Instance** → ![Multi-AZ Instance](/media/multi-az-dr-availability.png)
+* **RDS Read Replica** → ![RDS Read Replica](/media/aws-rds-read-replica.png)
+* **Aurora Cluster** → ![Aurora DB](/media/aurora-db.png)
+* **Aurora Global** → ![Aurora Global](/media/aurora-global.png)
+
+---
+
+✅ This document gives a **structured, side-by-side comparison** of RDS vs Aurora vs RDS Custom, with deployment options, costs, failover times, and scaling capabilities.
+
+Would you like me to **recreate this into a polished PDF with diagrams embedded** (similar to your original one), so you can distribute it as internal documentation?
+
 
 ## AWS RDS
 - **Fully managed** relational database service (continuous backup & restore, monitoring).
